@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>プライバシーポリシー - Tenji P-Fab</title>
+    <meta name="description" content="Tenji P-Fabのプライバシーポリシー。本アプリは個人情報の収集や外部通信を一切行いません。">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Poppins:wght@600;700&display=swap"
+        rel="stylesheet">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007AFF',       /* iOS Blue */
+                        secondary: '#5AC8FA',     /* iOS Cyan */
+                        accent: '#FF9500',        /* iOS Orange */
+                        surface: '#F2F2F7',       /* iOS Gray */
+                        dark: '#1C1C1E',
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        display: ['"Poppins"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Gradient Text */
+        .text-gradient {
+            background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+
+<body class="bg-surface text-gray-800 antialiased font-sans flex flex-col min-h-screen">
+
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <a href="index.html" class="flex items-center gap-2 hover:opacity-80 transition">
+                    <img class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white"
+                        src="images/splash.png"
+                        onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white\'><i class=\'fa-solid fa-braille\'></i></div><span class=\'font-display font-bold text-xl text-dark\'>Tenji P-Fab</span>'" />
+                    <span class="font-display font-bold text-xl text-dark">Tenji P-Fab</span>
+                </a>
+
+                <div class="flex space-x-4">
+                    <a href="index.html"
+                        class="text-gray-600 hover:text-primary transition font-medium flex items-center gap-2">
+                        <i class="fa-solid fa-house text-sm"></i>
+                        <span class="hidden sm:inline">ホームに戻る</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="flex-grow pt-32 pb-20">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <div class="text-center mb-12">
+                <h1 class="text-3xl md:text-4xl font-bold text-dark mb-4">プライバシーポリシー</h1>
+                <p class="text-gray-500">お客様のデータの取り扱いについて</p>
+            </div>
+
+            <div class="bg-white rounded-3xl shadow-sm p-8 md:p-12">
+
+                <div class="prose prose-blue max-w-none text-gray-600">
+                    <p class="text-right text-sm text-gray-400 mb-8">
+                        制定日: 2025年X月X日
+                    </p>
+
+                    <section class="mb-10">
+                        <h2
+                            class="text-xl font-bold text-dark mb-4 border-l-4 border-primary pl-4 flex items-center gap-2">
+                            1. 個人情報の収集について
+                        </h2>
+                        <p class="leading-relaxed">
+                            本アプリ「Tenji
+                            P-Fab」（以下、「当アプリ」といいます）は、ユーザーの個人情報、利用状況、デバイスID、位置情報など、いかなるデータも収集・保存いたしません。入力されたテキストデータは、点字変換処理のために一時的にメモリ上で処理されますが、永続的に保存されることはありません。
+                        </p>
+                    </section>
+
+                    <section class="mb-10">
+                        <h2
+                            class="text-xl font-bold text-dark mb-4 border-l-4 border-primary pl-4 flex items-center gap-2">
+                            2. データの送信・通信について
+                        </h2>
+                        <p class="leading-relaxed">
+                            当アプリは、外部サーバーへのデータ送信や、インターネットを介した通信機能を一切有しておりません。日本語解析および点字データの生成処理は、すべてお使いのデバイス内（ローカル）で完結します。したがって、入力内容が外部に漏洩することはありません。
+                        </p>
+                    </section>
+
+                    <section class="mb-10">
+                        <h2
+                            class="text-xl font-bold text-dark mb-4 border-l-4 border-primary pl-4 flex items-center gap-2">
+                            3. 第三者への提供について
+                        </h2>
+                        <p class="leading-relaxed">
+                            当アプリはユーザーの情報を収集しないため、第三者へデータを提供することもありません。また、広告配信SDKやユーザー行動解析ツールなどの情報収集モジュールも一切組み込んでおりません。
+                        </p>
+                    </section>
+
+                    <section class="mb-10">
+                        <h2
+                            class="text-xl font-bold text-dark mb-4 border-l-4 border-primary pl-4 flex items-center gap-2">
+                            4. お問い合わせ
+                        </h2>
+                        <p class="leading-relaxed mb-4">
+                            本プライバシーポリシーに関するご質問は、以下の連絡先までお問い合わせください。
+                        </p>
+                        <div class="bg-surface rounded-xl p-6 text-sm">
+                            <ul class="space-y-2">
+                                <li><span class="font-bold text-dark">開発者/組織名:</span> OPQRcoder</li>
+                                <li><span class="font-bold text-dark">連絡先:</span> opqrcode@gmail.com</li>
+                            </ul>
+                        </div>
+                    </section>
+
+                </div>
+
+                <div class="mt-12 pt-8 border-t border-gray-100 text-center">
+                    <a href="index.html" class="inline-flex items-center gap-2 text-primary font-bold hover:underline">
+                        <i class="fa-solid fa-arrow-left"></i> トップページに戻る
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="bg-gray-900 text-gray-500 py-12 border-t border-gray-800">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-gray-700 rounded flex items-center justify-center text-white text-xs">
+                    <i class="fa-solid fa-braille"></i>
+                </div>
+                <span class="font-display font-bold text-gray-300">Tenji P-Fab</span>
+            </div>
+            <div class="flex space-x-6 text-sm">
+                <span class="text-white cursor-default">プライバシーポリシー</span>
+                <a href="#" class="hover:text-white transition">利用規約</a>
+                <a href="#" class="hover:text-white transition">お問い合わせ</a>
+            </div>
+            <div class="text-sm">
+                &copy; 2025 Tenji P-Fab Project.
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

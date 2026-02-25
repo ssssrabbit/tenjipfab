@@ -1,0 +1,13 @@
+[tool.flet]
+product = "Tenji P-Fab"
+org = "com.yourname.tenjipfab"
+copyright = "Copyright (C) 2025 Tenji P-Fab Project"
+author = "Tenji P-Fab Team"
+
+[tool.flet.app]
+path = "main.py"
+
+[tool.flet.macos]
+bundle_id = "com.yourname.tenjipfab"
+build_version = "1.0.0"
+
