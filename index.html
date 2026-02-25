@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tenji P-Fab - スマホでつくる、触れる言葉。</title>
+    <meta name="description" content="スマートフォンで入力した日本語を自動で点字に変換し、3Dプリンター用のデータを作成できるアプリ。専門知識不要で、誰でもバリアフリーな環境づくりに参加できます。">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&family=Poppins:wght@600;700&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- FontAwesome (Icons) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- Config & Custom Styles -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#007AFF',       /* iOS Blue */
+                        secondary: '#5AC8FA',     /* iOS Cyan */
+                        accent: '#FF9500',        /* iOS Orange */
+                        surface: '#F2F2F7',       /* iOS Gray */
+                        dark: '#1C1C1E',
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans JP"', 'sans-serif'],
+                        display: ['"Poppins"', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Smooth Scrolling */
+        html {
+            scroll-behavior: smooth;
+        }
+
+        /* Floating Animation */
+        .float-anim {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        /* Gradient Text */
+        .text-gradient {
+            background: linear-gradient(135deg, #007AFF 0%, #5AC8FA 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+
+<body class="bg-white text-gray-800 antialiased font-sans">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center gap-2">
+                    <img class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white"
+                        src="images/splash.png" />
+                    <!-- ロゴ画像がある場合は img タグに差し替え推奨 
+                    <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center text-white">
+                        <i class="fa-solid fa-braille"></i>
+                    </div>-->
+                    <span class="font-display font-bold text-xl text-dark">Tenji P-Fab</span>
+                </div>
+                <div class="hidden md:flex space-x-8">
+                    <a href="#features" class="text-gray-600 hover:text-primary transition">特徴</a>
+                    <a href="#howto" class="text-gray-600 hover:text-primary transition">使い方</a>
+                    <a href="#comparison" class="text-gray-600 hover:text-primary transition">比較</a>
+                    <a href="#download"
+                        class="px-4 py-2 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition shadow-md">ダウンロード</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 lg:pt-48 lg:pb-32 bg-surface overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div class="z-10">
+                    <div class="inline-block px-4 py-1.5 mb-6 bg-blue-100 text-primary font-bold rounded-full text-sm">
+                        Mobile-First Accessible Design
+                    </div>
+                    <h1 class="text-4xl lg:text-6xl font-bold leading-tight mb-6 text-dark">
+                        スマホでつくる、<br>
+                        <span class="text-gradient">触れる言葉。</span>
+                    </h1>
+                    <p class="text-lg text-gray-600 mb-8 leading-relaxed max-w-lg">
+                        Tenji P-Fabは、日本語を入力するだけで、3Dプリンターですぐに出力できる点字データを生成します。専門知識は不要。あなたのポケットから、バリアフリーが始まります。
+                    </p>
+
+                    <!-- Download Buttons -->
+                    <div class="flex flex-wrap gap-4" id="download">
+                        <a href="https://apps.apple.com/us/app/tenji-p-fab/id6757128401"
+                            class="flex items-center gap-2 bg-dark text-white px-6 py-3 rounded-xl hover:opacity-80 transition shadow-lg">
+                            <i class="fa-brands fa-apple text-2xl"></i>
+                            <div class="text-left">
+                                <div class="text-xs">Download on the</div>
+                                <div class="font-bold text-lg leading-none">App Store</div>
+                            </div>
+                        </a>
+                        <!--
+                        <a href="#"
+                            class="flex items-center gap-2 bg-dark text-white px-6 py-3 rounded-xl hover:opacity-80 transition shadow-lg">
+                            <i class="fa-brands fa-google-play text-2xl"></i>
+                            <div class="text-left">
+                                <div class="text-xs">GET IT ON</div>
+                                <div class="font-bold text-lg leading-none">Google Play</div>
+                            </div>
+                        </a>
+                        -->
+                        <!-- Desktop Links -->
+                        <!--
+                        <div class="flex gap-2 mt-4 w-full">
+                            <a href="#" class="text-sm text-gray-500 hover:text-primary"><i
+                                    class="fa-brands fa-apple"></i> macOS版</a>
+                            <span class="text-gray-300">|</span>
+                            <a href="#" class="text-sm text-gray-500 hover:text-primary"><i
+                                    class="fa-brands fa-windows"></i> Windows版</a>
+                        </div>
+                        -->
+                    </div>
+                </div>
+
+                <!-- Mockup Image -->
+                <div
+                    class="relative lg:absolute lg:right-0 lg:top-1/2 lg:-translate-y-1/2 lg:w-1/2 flex justify-center">
+                    <!-- 背景の装飾円 -->
+                    <div
+                        class="absolute w-[500px] h-[500px] bg-blue-200/50 rounded-full blur-3xl -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+                    </div>
+
+                    <!-- 画像プレースホルダー -->
+                    <!-- assets/images/hero_mockup.png を配置してください -->
+                    <div
+                        class="w-[280px] md:w-[320px] aspect-[9/19] bg-gray-200 rounded-[3rem] border-8 border-dark shadow-2xl overflow-hidden float-anim flex items-center justify-center text-gray-400">
+                        <img src="images/hero_mockup.png" alt="App Screenshot" class="w-full h-full object-cover"
+                            onerror="this.style.display='none'; this.parentNode.innerHTML='<div class=\'text-center p-4\'><i class=\'fa-solid fa-image text-4xl mb-2\'></i><br>assets/images/<br>hero_mockup.png</div>'">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Vision Quote -->
+    <section class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 text-center">
+            <i class="fa-solid fa-quote-left text-4xl text-blue-200 mb-6"></i>
+            <blockquote class="text-2xl md:text-3xl font-bold text-gray-800 mb-6 font-display">
+                "Technology is nothing. What's important is that you have a faith in people... and if you give them
+                tools, they'll do wonderful things with them."
+            </blockquote>
+            <cite class="text-gray-500 not-italic font-medium">— Steve Jobs</cite>
+            <p class="mt-8 text-gray-600">
+                高価な機材ではなく、誰もが持つスマートフォンで点字を作れるようにする。<br>
+                それが、私たちの目指す「ツールの民主化」です。
+            </p>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section id="features" class="py-20 bg-surface">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-primary font-bold tracking-wide uppercase text-sm mb-2">Features</h2>
+                <h3 class="text-3xl md:text-4xl font-bold text-dark">3つのコア機能</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <!-- Feature 1 -->
+                <div class="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition duration-300">
+                    <div
+                        class="w-14 h-14 bg-blue-100 text-primary rounded-2xl flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-language"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-4">高度な日本語翻訳</h4>
+                    <p class="text-gray-600 mb-6">
+                        「私は学校へ行く」→「ワタシワ ガッコーエ イク」。
+                        漢字からカナへの変換、分かち書き、助詞の読み分けまで自動で行います。
+                    </p>
+                    <div
+                        class="aspect-video bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center text-gray-400 text-sm">
+                        <img src="images/feature_1.png" alt="Translation UI" class="w-full h-full object-cover"
+                            onerror="this.style.display='none'; this.parentNode.innerText='Image: feature_1.png'">
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div class="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition duration-300">
+                    <div
+                        class="w-14 h-14 bg-orange-100 text-accent rounded-2xl flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-4">インタラクティブ編集</h4>
+                    <p class="text-gray-600 mb-6">
+                        自動変換に頼りきりではありません。プレビュー上の点字ブロックをタップするだけで、その場で読みを修正できます。
+                    </p>
+                    <div
+                        class="aspect-video bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center text-gray-400 text-sm">
+                        <img src="images/feature_2.png" alt="Editing UI" class="w-full h-full object-cover"
+                            onerror="this.style.display='none'; this.parentNode.innerText='Image: feature_2.png'">
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="bg-white rounded-3xl p-8 shadow-sm hover:shadow-xl transition duration-300">
+                    <div
+                        class="w-14 h-14 bg-green-100 text-green-600 rounded-2xl flex items-center justify-center text-2xl mb-6">
+                        <i class="fa-solid fa-cube"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-4">3Dプリント最適化</h4>
+                    <p class="text-gray-600 mb-6">
+                        長文の自動分割、角丸処理、紐通し穴の生成など、現場で使いやすい形状のSTLデータを即座に書き出します。
+                    </p>
+                    <div
+                        class="aspect-video bg-gray-100 rounded-xl overflow-hidden flex items-center justify-center text-gray-400 text-sm">
+                        <img src="images/feature_3.png" alt="3D Output" class="w-full h-full object-cover"
+                            onerror="this.style.display='none'; this.parentNode.innerText='Image: feature_3.png'">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How to Use Section (NEW) -->
+    <section id="howto" class="py-20 bg-white">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-primary font-bold tracking-wide uppercase text-sm mb-2">How to Use</h2>
+                <h3 class="text-3xl md:text-4xl font-bold text-dark">3ステップで簡単作成</h3>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-center relative">
+                <!-- Connecting Line (Desktop) -->
+                <div
+                    class="hidden md:block absolute top-12 left-0 w-full h-1 bg-gray-100 -z-10 transform translate-y-1/2">
+                </div>
+
+                <!-- Step 1 -->
+                <div class="flex flex-col items-center text-center">
+                    <div
+                        class="w-24 h-24 bg-white border-4 border-blue-100 rounded-full flex items-center justify-center text-4xl text-primary mb-6 shadow-sm z-10 relative">
+                        <span
+                            class="absolute -top-3 -left-3 w-8 h-8 bg-primary text-white rounded-full text-sm font-bold flex items-center justify-center">1</span>
+                        <i class="fa-solid fa-keyboard"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2">文字を入力・変換</h4>
+                    <p class="text-gray-500 text-sm px-4">
+                        アプリに日本語を入力します。<br>点訳結果をプレビューで確認し、必要ならタップして修正します。
+                    </p>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="flex flex-col items-center text-center">
+                    <div
+                        class="w-24 h-24 bg-white border-4 border-blue-100 rounded-full flex items-center justify-center text-4xl text-accent mb-6 shadow-sm z-10 relative">
+                        <span
+                            class="absolute -top-3 -left-3 w-8 h-8 bg-accent text-white rounded-full text-sm font-bold flex items-center justify-center">2</span>
+                        <i class="fa-solid fa-file-arrow-down"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2">ZIPを保存</h4>
+                    <p class="text-gray-500 text-sm px-4">
+                        「保存」ボタンを押してZIPファイルをダウンロード。<br>中にはSTL（3Dデータ）と確認用HTMLガイドが入っています。
+                    </p>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="flex flex-col items-center text-center">
+                    <div
+                        class="w-24 h-24 bg-white border-4 border-blue-100 rounded-full flex items-center justify-center text-4xl text-green-600 mb-6 shadow-sm z-10 relative">
+                        <span
+                            class="absolute -top-3 -left-3 w-8 h-8 bg-green-600 text-white rounded-full text-sm font-bold flex items-center justify-center">3</span>
+                        <i class="fa-solid fa-print"></i>
+                    </div>
+                    <h4 class="text-xl font-bold mb-2">3Dプリンターへ</h4>
+                    <p class="text-gray-500 text-sm px-4">
+                        STLファイルを3Dプリンターに読み込ませ、印刷開始！<br>数分で点字プレートが完成します。
+                    </p>
+                </div>
+            </div>
+
+            <!-- Workflow Image (Optional) -->
+            <div class="mt-16 text-center">
+                <div class="bg-surface rounded-2xl p-4 md:p-8 inline-block shadow-inner max-w-4xl mx-auto w-full">
+                    <div
+                        class="aspect-[16/5] bg-white rounded-xl border border-gray-200 flex items-center justify-center overflow-hidden relative">
+                        <!-- ここにワークフローの図解画像を入れるとベストです -->
+                        <div class="flex items-center justify-around w-full px-8 opacity-50">
+                            <i class="fa-solid fa-mobile-screen-button text-6xl text-gray-300"></i>
+                            <i class="fa-solid fa-arrow-right text-2xl text-gray-300"></i>
+                            <i class="fa-solid fa-file-zipper text-6xl text-gray-300"></i>
+                            <i class="fa-solid fa-arrow-right text-2xl text-gray-300"></i>
+                            <i class="fa-solid fa-cube text-6xl text-gray-300"></i>
+                        </div>
+                        <div class="absolute inset-0 flex items-center justify-center">
+                            <span class="bg-white/90 px-4 py-2 rounded text-gray-400 text-xs">
+                                <img src="images/plate.jpg" />
+                                <!-- Workflow Image Area (assets/images/workflow.png)-->
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Section -->
+    <section id="comparison" class="py-20 bg-surface">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl md:text-4xl font-bold text-dark">他方式との比較</h2>
+                <p class="text-gray-500 mt-4">点字作成ソフトウェアとしてのTenji P-Fab</p>
+            </div>
+
+            <div class="overflow-x-auto bg-white rounded-3xl shadow-sm p-4">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-sm text-gray-500 border-b-2 border-gray-100">
+                            <th class="py-4 pl-4 font-medium">機能 / サービス</th>
+                            <th
+                                class="py-4 px-4 text-center bg-blue-50 rounded-xl text-primary font-bold text-lg w-1/4">
+                                Tenji P-Fab
+                            </th>
+                            <th class="py-4 px-4 text-center font-medium w-1/5">TouchSee (Web)</th>
+                            <th class="py-4 px-4 text-center font-medium w-1/5">ibukiTen (PC)</th>
+                            <th class="py-4 px-4 text-center font-medium w-1/5">Bambu Handy</th>
+                        </tr>
+                    </thead>
+                    <tbody class="text-gray-700">
+                        <!-- Row 1 -->
+                        <tr class="border-b border-gray-100">
+                            <td class="py-6 pl-4 font-bold">日本語点訳<br><span
+                                    class="text-xs font-normal text-gray-400">分かち書き・助詞対応</span></td>
+                            <td class="py-6 px-4 text-center bg-blue-50/50 text-primary font-bold rounded-xl my-2">
+                                <i class="fa-solid fa-circle-check text-2xl"></i><br>自動 + 修正
+                            </td>
+                            <td class="py-6 px-4 text-center text-gray-400"><i
+                                    class="fa-solid fa-xmark text-xl"></i><br>非対応</td>
+                            <td class="py-6 px-4 text-center text-green-600"><i
+                                    class="fa-solid fa-circle-check text-xl"></i><br>高精度</td>
+                            <td class="py-6 px-4 text-center text-orange-400"><i
+                                    class="fa-solid fa-triangle-exclamation text-xl"></i><br>フォントのみ</td>
+                        </tr>
+                        <!-- Row 2 -->
+                        <tr class="border-b border-gray-100">
+                            <td class="py-6 pl-4 font-bold">3Dデータ出力<br><span
+                                    class="text-xs font-normal text-gray-400">STL / 3MF</span></td>
+                            <td class="py-6 px-4 text-center bg-blue-50/50 text-primary font-bold rounded-xl">
+                                <i class="fa-solid fa-circle-check text-2xl"></i><br>自動分割・穴あき
+                            </td>
+                            <td class="py-6 px-4 text-center"><i class="fa-regular fa-circle text-xl"></i><br>単体のみ</td>
+                            <td class="py-6 px-4 text-center text-gray-400"><i
+                                    class="fa-solid fa-xmark text-xl"></i><br>不可</td>
+                            <td class="py-6 px-4 text-center text-green-600"><i
+                                    class="fa-solid fa-circle-check text-xl"></i><br>直接印刷</td>
+                        </tr>
+                        <!-- Row 3 -->
+                        <tr class="border-b border-gray-100">
+                            <td class="py-6 pl-4 font-bold">健常者ガイド<br><span
+                                    class="text-xs font-normal text-gray-400">確認用HTML/PDF</span></td>
+                            <td class="py-6 px-4 text-center bg-blue-50/50 text-primary font-bold rounded-xl">
+                                <i class="fa-solid fa-circle-check text-2xl"></i><br>標準同梱
+                            </td>
+                            <td class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-xmark text-xl"></i>
+                            </td>
+                            <td class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-xmark text-xl"></i>
+                            </td>
+                            <td class="py-6 px-4 text-center text-gray-400"><i class="fa-solid fa-xmark text-xl"></i>
+                            </td>
+                        </tr>
+                        <!-- Row 4 -->
+                        <tr class="border-b border-gray-100">
+                            <td class="py-6 pl-4 font-bold">導入コスト<br><span
+                                    class="text-xs font-normal text-gray-400">ハードウェア</span></td>
+                            <td class="py-6 px-4 text-center bg-blue-50/50 text-primary font-bold rounded-xl">
+                                <span class="text-sm">安価</span><br>3Dプリンタ
+                            </td>
+                            <td class="py-6 px-4 text-center"><span class="text-sm">安価</span><br>3Dプリンタ</td>
+                            <td class="py-6 px-4 text-center"><span class="text-sm">高価</span><br>点字プリンタ</td>
+                            <td class="py-6 px-4 text-center"><span class="text-sm">安価</span><br>3Dプリンタ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- Call to Action -->
+    <section class="py-20 bg-dark text-white text-center">
+        <div class="max-w-4xl mx-auto px-4">
+            <h2 class="text-3xl md:text-5xl font-bold mb-8">バリアフリーを、もっと身近に。</h2>
+            <p class="text-gray-400 mb-10 text-lg">
+                Tenji P-Fab はオープンソースプロジェクトとして開発されています。<br>
+                あなたのフィードバックが、アプリをより良くします。
+            </p>
+            <div class="flex justify-center gap-4">
+                <a href="#download"
+                    class="px-8 py-4 bg-primary text-white rounded-full font-bold hover:bg-blue-600 transition shadow-lg text-lg">
+                    今すぐ始める
+                </a>
+                <a href="https://github.com/hxk6xgk6zc-tech/tenjipfab/" target="_blank"
+                    class="px-8 py-4 bg-gray-700 text-white rounded-full font-bold hover:bg-gray-600 transition shadow-lg text-lg flex items-center gap-2">
+                    <i class="fa-brands fa-github"></i> GitHub
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-900 text-gray-500 py-12 border-t border-gray-800">
+        <div
+            class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-6 h-6 bg-gray-700 rounded flex items-center justify-center text-white text-xs">
+                    <i class="fa-solid fa-braille"></i>
+                </div>
+                <span class="font-display font-bold text-gray-300">Tenji P-Fab</span>
+            </div>
+            <div class="flex space-x-6 text-sm">
+                <a href="privacypolicy.html" class="hover:text-white transition">プライバシーポリシー</a>
+                <a href="#" class="hover:text-white transition">利用規約</a>
+                <a href="#" class="hover:text-white transition">お問い合わせ</a>
+            </div>
+            <div class="text-sm">
+                &copy; 2025 OPQRcode.
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>
