@@ -1,27 +1,27 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { create } from 'zustand';
+import { getLocales } from 'expo-localization';
 import { NativeModules, Platform } from 'react-native';
 import { BrailleLanguage } from '../logic/brailleLogic';
 
-function detectDefaultBrailleLanguage(): BrailleLanguage {
+/**
+ * デバイスのシステム言語を返す。UI テキストの切り替えに使う。
+ * 点字の翻訳言語（settings.brailleLanguage）とは独立している。
+ */
+export function getUILocale(): 'en' | 'ja' {
   try {
-    // Intl API を先に試す（Hermes では iOS/Android 両方で動作）
-    const locale = Intl.DateTimeFormat().resolvedOptions().locale;
-    if (locale.startsWith('ja')) return 'ja';
-
-    // iOS フォールバック: NativeModules.SettingsManager
+    const lang = getLocales()?.[0]?.languageCode ?? '';
+    if (lang.startsWith('en')) return 'en';
+    if (lang.startsWith('ja')) return 'ja';
+  } catch {}
+  try {
     if (Platform.OS === 'ios') {
-      const langs: string[] | undefined =
-        NativeModules.SettingsManager?.settings?.AppleLanguages;
-      const appleLocale: string | undefined =
-        NativeModules.SettingsManager?.settings?.AppleLocale;
-      const tag = langs?.[0] ?? appleLocale ?? '';
+      const tag = NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ?? '';
+      if (tag.startsWith('en')) return 'en';
       if (tag.startsWith('ja')) return 'ja';
     }
-  } catch {
-    // fall through
-  }
-  return 'en';
+  } catch {}
+  return 'ja';
 }
 
 const HISTORY_KEY = 'tenji_pfab_history_v1';
@@ -41,7 +41,7 @@ export interface AppSettings {
   plateThickness: number;
   dotHeight: number;
   historyLimit: number;
-  brailleLanguage: BrailleLanguage;
+  brailleLanguage: BrailleLanguage; // 点字の翻訳言語（UIとは独立）
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -50,7 +50,7 @@ const DEFAULT_SETTINGS: AppSettings = {
   plateThickness: 1.0,
   dotHeight: 0.4,
   historyLimit: 20,
-  brailleLanguage: detectDefaultBrailleLanguage(),
+  brailleLanguage: 'ja',
 };
 
 // ---- AsyncStorage helpers ----
@@ -69,37 +69,37 @@ async function loadHistory(): Promise<HistoryEntry[]> {
 async function saveHistory(history: HistoryEntry[]): Promise<void> {
   try {
     await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(history));
-  } catch {
-    // ストレージエラーは無視（メモリ上の状態は保持）
-  }
+  } catch {}
 }
 
 async function loadSettings(): Promise<AppSettings> {
   try {
     const raw = await AsyncStorage.getItem(CONFIG_KEY);
-    if (!raw) return { ...DEFAULT_SETTINGS };
-    const parsed = JSON.parse(raw);
-    if (typeof parsed !== 'object' || parsed === null) return { ...DEFAULT_SETTINGS };
-    // brailleLanguage が保存されていない（機能追加前の設定）場合はロケールから検出
-    if (!parsed.brailleLanguage) {
-      parsed.brailleLanguage = detectDefaultBrailleLanguage();
+    // 初回インストール: デバイスロケールで点字言語を初期化
+    if (!raw) {
+      return { ...DEFAULT_SETTINGS, brailleLanguage: getUILocale() };
     }
-    // dotHeight が保存されていない（機能追加前の設定）場合はデフォルト値を使用
+    const parsed = JSON.parse(raw);
+    if (typeof parsed !== 'object' || parsed === null) {
+      return { ...DEFAULT_SETTINGS, brailleLanguage: getUILocale() };
+    }
+    // 保存済みの点字言語をそのまま使う（ユーザー設定を尊重）
+    if (!parsed.brailleLanguage) {
+      parsed.brailleLanguage = getUILocale();
+    }
     if (parsed.dotHeight == null) {
       parsed.dotHeight = DEFAULT_SETTINGS.dotHeight;
     }
     return { ...DEFAULT_SETTINGS, ...parsed };
   } catch {
-    return { ...DEFAULT_SETTINGS };
+    return { ...DEFAULT_SETTINGS, brailleLanguage: getUILocale() };
   }
 }
 
 async function saveSettings(settings: AppSettings): Promise<void> {
   try {
     await AsyncStorage.setItem(CONFIG_KEY, JSON.stringify(settings));
-  } catch {
-    // ストレージエラーは無視
-  }
+  } catch {}
 }
 
 // ---- Zustand store ----
@@ -141,7 +141,6 @@ export const useHistoryStore = create<HistoryStoreState>((set, get) => ({
       plateThickness: settings.plateThickness,
     };
 
-    // 重複排除: 先頭エントリが同テキスト＆同設定ならタイムスタンプだけ更新
     let updated = [...history];
     if (updated.length > 0) {
       const last = updated[0];

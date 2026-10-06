@@ -18,7 +18,7 @@ import {
 } from '../logic/brailleLogic';
 import { initializeKuromoji, getKuromojiProgress } from '../logic/japaneseProcessor';
 import { generatePackageFromPlates } from '../logic/stlGenerator';
-import { useHistoryStore, HistoryEntry } from '../stores/historyStore';
+import { useHistoryStore, HistoryEntry, getUILocale } from '../stores/historyStore';
 import BraillePlate, { FlatCellInfo } from '../components/BraillePlate';
 import SettingsModal from '../components/SettingsModal';
 import HistoryModal from '../components/HistoryModal';
@@ -155,6 +155,11 @@ function splitCellsWithRules(allCells: FlatCellInfo[], maxChars: number, lang: B
   return lines;
 }
 
+const ATTACH_BEFORE = new Set(['。', '、', '，', '．', '？', '！', '・']);
+const SENTENCE_END = new Set(['。', '？', '！']);
+const EXCL_QUESTION = new Set(['？', '！']);
+const CLOSERS = new Set([...'」』）〕］｝〉》】']);
+
 function buildFlatCells(mappedData: WordMapping[]): FlatCellInfo[] {
   const flat: FlatCellInfo[] = [];
 
@@ -171,17 +176,22 @@ function buildFlatCells(mappedData: WordMapping[]): FlatCellInfo[] {
       flat.push({ ...cell, wordIdx, orig: item.orig });
     }
 
-    // 次のアイテムが改行マーカー・インデント・末尾・助詞・助動詞の場合はスペースを挿入しない
+    // 空白の入れ方（文部科学省「点字表記法」第6章第3節 句読法）
+    //  - 句点・読点・疑問符・感嘆符・中点は直前の語に続けて書く（前に空白を入れない）
+    //  - 句点・疑問符・感嘆符の後ろ（文末）は2マス、読点の後ろは1マス
+    //  - 疑問符・感嘆符が文中（助詞が続く）の場合は1マス
+    //  - 閉じ括弧が続く場合は空けない
+    //  - 改行マーカー・インデント・末尾・助詞・助動詞の前は空けない
     const next = mappedData[wordIdx + 1];
-    const skipSpace =
-      !next ||
-      next.orig === '\n' ||
-      next.isParagraphStart ||
-      item.isParagraphStart ||
-      next.pos === '助詞' ||
-      next.pos === '助動詞';
-
-    if (!skipSpace) {
+    if (!next || next.orig === '\n' || next.isParagraphStart || item.isParagraphStart) return;
+    const nextIsParticle = next.pos === '助詞' || next.pos === '助動詞';
+    let spaceCount: number;
+    if (ATTACH_BEFORE.has(next.orig) || CLOSERS.has(next.orig)) return;
+    else if (EXCL_QUESTION.has(item.orig) && nextIsParticle) spaceCount = 1;
+    else if (nextIsParticle) return;
+    else if (SENTENCE_END.has(item.orig)) spaceCount = 2;
+    else spaceCount = 1;
+    for (let k = 0; k < spaceCount; k++) {
       flat.push({ dots: SPACE_MARK, char: ' ', wordIdx: -1, orig: '(Space)' });
     }
   });
@@ -193,16 +203,64 @@ const INPUT_RATIO_MIN = 0.25;
 const INPUT_RATIO_MAX = 0.75;
 const INPUT_RATIO_DEFAULT = 0.35;
 
+const UNCONVERTED_WARN_THRESHOLD = 0.3;
+const UNCONVERTED_WARN_MIN_CHARS = 3;
+
+function computeUnconvertedRanges(text: string, data: WordMapping[]): [number, number][] {
+  if (!text || data.length === 0) return [];
+  const converted = new Set<number>();
+  for (const word of data) {
+    if (word.cells.length > 0 && word.orig !== '\n') {
+      for (let i = word.start; i < word.end; i++) converted.add(i);
+    }
+  }
+  const ranges: [number, number][] = [];
+  let i = 0;
+  while (i < text.length) {
+    const c = text[i];
+    if (c !== ' ' && c !== '\n' && !converted.has(i)) {
+      let j = i + 1;
+      while (j < text.length && text[j] !== ' ' && text[j] !== '\n' && !converted.has(j)) j++;
+      ranges.push([i, j]);
+      i = j;
+    } else {
+      i++;
+    }
+  }
+  return ranges;
+}
+
+function computeUnconvertedRatio(text: string, ranges: [number, number][]): number {
+  const nonSpace = [...text].filter(c => c.trim() !== '').length;
+  if (nonSpace === 0) return 0;
+  return ranges.reduce((s, [a, b]) => s + (b - a), 0) / nonSpace;
+}
+
+function buildColoredSpans(text: string, ranges: [number, number][]): React.ReactNode {
+  if (ranges.length === 0) return text;
+  const parts: React.ReactNode[] = [];
+  let cur = 0;
+  for (const [s, e] of ranges) {
+    if (cur < s) parts.push(<Text key={`n${cur}`}>{text.slice(cur, s)}</Text>);
+    parts.push(<Text key={`g${s}`} style={{ color: '#AAAAAA' }}>{text.slice(s, e)}</Text>);
+    cur = e;
+  }
+  if (cur < text.length) parts.push(<Text key={`n${cur}`}>{text.slice(cur)}</Text>);
+  return <>{parts}</>;
+}
+
 export default function HomeScreen() {
   const { history, settings, initialized, init, addEntry, clearHistory, updateSettings } =
     useHistoryStore();
   const { height: screenHeight } = useWindowDimensions();
 
-  const [inputText, setInputText]           = useState('');
-  const [mappedData, setMappedData]         = useState<WordMapping[]>([]);
-  const [plates, setPlates]                 = useState<FlatCellInfo[][][]>([]);
-  const [isSaving, setIsSaving]             = useState(false);
-  const [loadProgress, setLoadProgress]     = useState<number>(() => getKuromojiProgress());
+  const [inputText, setInputText]               = useState('');
+  const [mappedData, setMappedData]             = useState<WordMapping[]>([]);
+  const [plates, setPlates]                     = useState<FlatCellInfo[][][]>([]);
+  const [isSaving, setIsSaving]                 = useState(false);
+  const [loadProgress, setLoadProgress]         = useState<number>(() => getKuromojiProgress());
+  const [unconvertedRanges, setUnconvertedRanges] = useState<[number, number][]>([]);
+  const [unconvertedRatio, setUnconvertedRatio]   = useState(0);
 
   // モーダル表示フラグ
   const [showSettings, setShowSettings]     = useState(false);
@@ -241,6 +299,7 @@ export default function HomeScreen() {
   mappedDataRef.current = mappedData;
 
   const tokenizerReady = loadProgress >= 1;
+  const isEn = getUILocale() === 'en';
 
   // kuromoji 準備完了時、日本語モードなら再変換
   useEffect(() => {
@@ -248,6 +307,7 @@ export default function HomeScreen() {
       const data = converter.convertWithMapping(inputText, 'ja');
       setMappedData(data);
       renderPreview(data, settings.maxCharsPerLine, settings.maxLinesPerPlate, 'ja');
+      updateConversionAnalysis(inputText, data);
     }
   }, [tokenizerReady]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -258,20 +318,23 @@ export default function HomeScreen() {
       const data = converter.convertWithMapping(inputText, lang);
       setMappedData(data);
       renderPreview(data, settings.maxCharsPerLine, settings.maxLinesPerPlate, lang);
+      updateConversionAnalysis(inputText, data);
     }
   }, [settings.brailleLanguage]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 初期化
   useEffect(() => { init(); }, []);
 
-  // kuromoji 初期化：150ms ポーリング + Promise完了で確実に反映
+  // kuromoji 初期化：設定ロード後、日本語モードのときだけ実行
   useEffect(() => {
-    if (getKuromojiProgress() >= 1) return; // 既に完了済み
+    if (!initialized) return;
+    if (settings.brailleLanguage !== 'ja') return;
+    if (getKuromojiProgress() >= 1) return;
 
-    setLoadProgress(0.01); // バーをすぐに表示する
+    setLoadProgress(0.01);
 
     initializeKuromoji()
-      .then(() => setLoadProgress(1)) // Promise完了で確実に100%へ
+      .then(() => setLoadProgress(1))
       .catch((err) => console.warn('kuromoji init failed:', err));
 
     const id = setInterval(() => {
@@ -281,7 +344,13 @@ export default function HomeScreen() {
     }, 150);
 
     return () => clearInterval(id);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [initialized, settings.brailleLanguage]);
+
+  const updateConversionAnalysis = useCallback((text: string, data: WordMapping[]) => {
+    const ranges = computeUnconvertedRanges(text, data);
+    setUnconvertedRanges(ranges);
+    setUnconvertedRatio(computeUnconvertedRatio(text, ranges));
+  }, []);
 
   // 点字プレビュー再計算
   const renderPreview = useCallback((data: WordMapping[], charsPerLine: number, linesPerPlate: number, lang: BrailleLanguage) => {
@@ -299,13 +368,16 @@ export default function HomeScreen() {
     if (!text) {
       setMappedData([]);
       setPlates([]);
+      setUnconvertedRanges([]);
+      setUnconvertedRatio(0);
       return;
     }
     const lang = settings.brailleLanguage;
     const data = converter.convertWithMapping(text, lang);
     setMappedData(data);
     renderPreview(data, settings.maxCharsPerLine, settings.maxLinesPerPlate, lang);
-  }, [settings, renderPreview]);
+    updateConversionAnalysis(text, data);
+  }, [settings, renderPreview, updateConversionAnalysis]);
 
   // 設定変更時にプレビュー再描画
   const handleSettingsUpdate = useCallback((patch: Partial<typeof settings>) => {
@@ -334,7 +406,7 @@ export default function HomeScreen() {
     };
     setMappedData(updated);
     renderPreview(updated, settings.maxCharsPerLine, settings.maxLinesPerPlate, settings.brailleLanguage);
-    Toast.show({ type: 'success', text1: '読みを修正しました' });
+    Toast.show({ type: 'success', text1: isEn ? 'Reading updated' : '読みを修正しました' });
   }
 
   // 履歴から復元
@@ -349,13 +421,14 @@ export default function HomeScreen() {
     const data = converter.convertWithMapping(item.text, lang);
     setMappedData(data);
     renderPreview(data, item.maxCharsPerLine, item.maxLinesPerPlate, lang);
-    Toast.show({ type: 'success', text1: `履歴を復元しました: ${item.timestamp}` });
+    updateConversionAnalysis(item.text, data);
+    Toast.show({ type: 'success', text1: isEn ? `Restored: ${item.timestamp}` : `履歴を復元しました: ${item.timestamp}` });
   }
 
   // ZIP 保存 & 共有
   async function handleSave() {
     if (mappedData.length === 0) {
-      Toast.show({ type: 'error', text1: 'データがありません' });
+      Toast.show({ type: 'error', text1: isEn ? 'No data to export' : 'データがありません' });
       return;
     }
     setIsSaving(true);
@@ -385,13 +458,13 @@ export default function HomeScreen() {
 
       await Sharing.shareAsync(fileUri, {
         mimeType: 'application/zip',
-        dialogTitle: 'ZIPファイルを保存',
+        dialogTitle: isEn ? 'Save ZIP file' : 'ZIPファイルを保存',
       });
 
-      Toast.show({ type: 'success', text1: '書き出し完了', text2: filename });
+      Toast.show({ type: 'success', text1: isEn ? 'Export complete' : '書き出し完了', text2: filename });
     } catch (err) {
       console.error(err);
-      Toast.show({ type: 'error', text1: '保存に失敗しました', text2: String(err) });
+      Toast.show({ type: 'error', text1: isEn ? 'Export failed' : '保存に失敗しました', text2: String(err) });
     } finally {
       setIsSaving(false);
     }
@@ -425,7 +498,11 @@ export default function HomeScreen() {
       {/* 点字プレビュー */}
       <ScrollView style={styles.previewArea} contentContainerStyle={styles.previewContent}>
         {plates.length === 0 ? (
-          <Text style={styles.placeholder}>テキストを入力すると点字プレビューが表示されます</Text>
+          <Text style={styles.placeholder}>
+            {settings.brailleLanguage === 'en'
+              ? 'Enter text to preview braille'
+              : 'テキストを入力すると点字プレビューが表示されます'}
+          </Text>
         ) : (
           plates.map((plateLines, i) => (
             <BraillePlate
@@ -444,7 +521,7 @@ export default function HomeScreen() {
         <View {...panResponder.panHandlers} style={styles.dragHandleArea}>
           <View style={styles.dragHandle} />
         </View>
-        <Text style={styles.inputLabel}>入力テキスト</Text>
+        <Text style={styles.inputLabel}>{isEn ? 'Input Text' : '入力テキスト'}</Text>
         <View style={styles.inputCard}>
           {settings.brailleLanguage === 'ja' && loadProgress > 0 && loadProgress < 1 && (
             <View style={styles.progressWrapper}>
@@ -457,15 +534,34 @@ export default function HomeScreen() {
               </View>
             </View>
           )}
-          <TextInput
-            style={styles.textInput}
-            value={inputText}
-            onChangeText={handleTextChange}
-            placeholder={settings.brailleLanguage === 'en' ? 'Enter text here...' : 'ここに日本語を入力...'}
-            placeholderTextColor={AppColors.TEXT_SUB}
-            multiline
-            textAlignVertical="top"
-          />
+          {unconvertedRatio > UNCONVERTED_WARN_THRESHOLD &&
+           [...inputText].filter(c => c.trim() !== '').length >= UNCONVERTED_WARN_MIN_CHARS && (
+            <Pressable style={styles.languageWarning} onPress={() => setShowSettings(true)}>
+              <MaterialIcons name="warning" size={14} color="#D97706" />
+              <Text style={styles.languageWarningText}>
+                {isEn
+                  ? 'Many characters cannot be converted — switch to Japanese mode in settings'
+                  : '多くの文字が変換できていません — 言語設定を確認してください'}
+              </Text>
+            </Pressable>
+          )}
+          <View style={{ flex: 1 }}>
+            {inputText.length > 0 && (
+              <Text style={[styles.textInput, styles.textOverlay]} pointerEvents="none">
+                {buildColoredSpans(inputText, unconvertedRanges)}
+              </Text>
+            )}
+            <TextInput
+              style={[styles.textInput, inputText.length > 0 && { color: 'transparent' }]}
+              selectionColor={AppColors.PRIMARY}
+              value={inputText}
+              onChangeText={handleTextChange}
+              placeholder={isEn ? 'Enter text here...' : 'ここに日本語を入力...'}
+              placeholderTextColor={AppColors.TEXT_SUB}
+              multiline
+              textAlignVertical="top"
+            />
+          </View>
           <Pressable
             style={({ pressed }) => [styles.saveBtn, pressed && styles.saveBtnPressed]}
             onPress={handleSave}
@@ -475,7 +571,7 @@ export default function HomeScreen() {
               ? <ActivityIndicator color={AppColors.SURFACE} />
               : <>
                   <MaterialIcons name="save" size={18} color={AppColors.SURFACE} />
-                  <Text style={styles.saveBtnText}>保存</Text>
+                  <Text style={styles.saveBtnText}>{isEn ? 'Save' : '保存'}</Text>
                 </>
             }
           </Pressable>
@@ -615,6 +711,26 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 16,
     color: AppColors.TEXT_MAIN,
+  },
+  textOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    flex: 0,
+  },
+  languageWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF3C7',
+    borderRadius: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  languageWarningText: {
+    flex: 1,
+    fontSize: 11,
+    color: '#92400E',
+    lineHeight: 16,
   },
   saveBtn: {
     flexDirection: 'row',

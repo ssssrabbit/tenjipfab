@@ -39,3 +39,7 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+Brewfile
+brew_cask.txt
+brew_formulae.txt
+metro.config.js

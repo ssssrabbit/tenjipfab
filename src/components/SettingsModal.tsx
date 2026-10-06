@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { AppColors } from '../constants/colors';
-import { AppSettings } from '../stores/historyStore';
+import { AppSettings, getUILocale } from '../stores/historyStore';
 
 interface Props {
   visible: boolean;
@@ -13,11 +13,36 @@ interface Props {
   onUpdate: (patch: Partial<AppSettings>) => void;
 }
 
+const LABELS = {
+  en: {
+    title: 'Output Settings',
+    charsPerLine: 'Characters per line',
+    linesPerPlate: 'Lines per plate',
+    plateThickness: 'Plate thickness (mm)',
+    dotHeight: 'Dot height (mm)',
+    charsUnit: (n: number) => `${n}`,
+    linesUnit: (n: number) => `${n}`,
+    close: 'Close',
+  },
+  ja: {
+    title: '出力設定',
+    charsPerLine: '1行あたりの文字数',
+    linesPerPlate: '1プレートあたりの行数',
+    plateThickness: 'プレートの厚さ (mm)',
+    dotHeight: 'ドットの高さ (mm)',
+    charsUnit: (n: number) => `${n}文字`,
+    linesUnit: (n: number) => `${n}行`,
+    close: '閉じる',
+  },
+} as const;
+
 export default function SettingsModal({ visible, settings, onClose, onUpdate }: Props) {
   const [chars, setChars]         = useState(settings.maxCharsPerLine);
   const [lines, setLines]         = useState(settings.maxLinesPerPlate);
   const [thick, setThick]         = useState(settings.plateThickness);
   const [dotHeight, setDotHeight] = useState(settings.dotHeight);
+
+  const L = LABELS[getUILocale()] ?? LABELS.ja;
 
   // 親の settings が変わったら同期
   React.useEffect(() => {
@@ -31,9 +56,9 @@ export default function SettingsModal({ visible, settings, onClose, onUpdate }: 
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.dialog}>
-          <Text style={styles.title}>出力設定</Text>
+          <Text style={styles.title}>{L.title}</Text>
           <ScrollView>
-            <Text style={styles.label}>1行あたりの文字数</Text>
+            <Text style={styles.label}>{L.charsPerLine}</Text>
             <View style={styles.row}>
               <Slider
                 style={styles.slider}
@@ -43,10 +68,10 @@ export default function SettingsModal({ visible, settings, onClose, onUpdate }: 
                 onValueChange={(v) => setChars(Math.round(v))}
                 onSlidingComplete={(v) => onUpdate({ maxCharsPerLine: Math.round(v) })}
               />
-              <Text style={styles.valueLabel}>{chars}文字</Text>
+              <Text style={styles.valueLabel}>{L.charsUnit(chars)}</Text>
             </View>
 
-            <Text style={styles.label}>1プレートあたりの行数</Text>
+            <Text style={styles.label}>{L.linesPerPlate}</Text>
             <View style={styles.row}>
               <Slider
                 style={styles.slider}
@@ -56,10 +81,10 @@ export default function SettingsModal({ visible, settings, onClose, onUpdate }: 
                 onValueChange={(v) => setLines(Math.round(v))}
                 onSlidingComplete={(v) => onUpdate({ maxLinesPerPlate: Math.round(v) })}
               />
-              <Text style={styles.valueLabel}>{lines}行</Text>
+              <Text style={styles.valueLabel}>{L.linesUnit(lines)}</Text>
             </View>
 
-            <Text style={styles.label}>プレートの厚さ (mm)</Text>
+            <Text style={styles.label}>{L.plateThickness}</Text>
             <View style={styles.row}>
               <Slider
                 style={styles.slider}
@@ -72,7 +97,7 @@ export default function SettingsModal({ visible, settings, onClose, onUpdate }: 
               <Text style={styles.valueLabel}>{thick.toFixed(1)}mm</Text>
             </View>
 
-            <Text style={styles.label}>ドットの高さ (mm)</Text>
+            <Text style={styles.label}>{L.dotHeight}</Text>
             <View style={styles.row}>
               <Slider
                 style={styles.slider}
@@ -108,7 +133,7 @@ export default function SettingsModal({ visible, settings, onClose, onUpdate }: 
 
           <View style={styles.actions}>
             <Pressable onPress={onClose} style={styles.actionBtn}>
-              <Text style={styles.actionText}>閉じる</Text>
+              <Text style={styles.actionText}>{L.close}</Text>
             </Pressable>
           </View>
         </View>
