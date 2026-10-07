@@ -16,6 +16,7 @@ import {
   NUM_INDICATOR, FOREIGN_INDICATOR, YOON_MARK, YOON_DAKU_MARK, YOON_HANDAKU_MARK,
   HYPHEN_MARK,
 } from '../logic/brailleLogic';
+import { WAVE, TSUNAGI, MASK, GAP_BEFORE_PARTICLE, ATTACH_NUMBER, LETTERLIKE_CHARS } from '../logic/symbols';
 import { initializeKuromoji, getKuromojiProgress } from '../logic/japaneseProcessor';
 import { generatePackageFromPlates } from '../logic/stlGenerator';
 import { useHistoryStore, HistoryEntry, getUILocale } from '../stores/historyStore';
@@ -155,10 +156,11 @@ function splitCellsWithRules(allCells: FlatCellInfo[], maxChars: number, lang: B
   return lines;
 }
 
-const ATTACH_BEFORE = new Set(['。', '、', '，', '．', '？', '！', '・']);
+const ATTACH_BEFORE = new Set(['。', '、', '，', '．', '？', '！', '・', ...WAVE]); // 波線は前後を空けない
 const SENTENCE_END = new Set(['。', '？', '！']);
 const EXCL_QUESTION = new Set(['？', '！']);
-const CLOSERS = new Set([...'」』）〕］｝〉》】']);
+const CLOSERS = new Set([...'」』）〕］｝〉》】)]']);
+const OPENERS = new Set([...'「『（〔［｛〈《【([']); // 囲み符号の内側は続ける（開きの後ろは空けない）
 
 function buildFlatCells(mappedData: WordMapping[]): FlatCellInfo[] {
   const flat: FlatCellInfo[] = [];
@@ -184,19 +186,47 @@ function buildFlatCells(mappedData: WordMapping[]): FlatCellInfo[] {
     //  - 改行マーカー・インデント・末尾・助詞・助動詞の前は空けない
     const next = mappedData[wordIdx + 1];
     if (!next || next.orig === '\n' || next.isParagraphStart || item.isParagraphStart) return;
+    if (OPENERS.has(item.orig) || WAVE.has(item.orig) || next.attachPrev) return;
     const nextIsParticle = next.pos === '助詞' || next.pos === '助動詞';
     let spaceCount: number;
     if (ATTACH_BEFORE.has(next.orig) || CLOSERS.has(next.orig)) return;
+    else if (GAP_BEFORE_PARTICLE.has(item.orig) && item.cells.length > 0 && nextIsParticle) spaceCount = 1; // ％＃＊・伏せ字の後ろの助詞・助動詞は1マス
+    else if (item.orig === MASK && item.cells.length > 0) return; // 伏せ字の後ろは続ける（つなぎ符は後段で挿入）
+    else if (ATTACH_NUMBER.has(item.orig) && next.cells.length > 0 && next.cells[0].dots.join('') === '001111') return; // ＊11 のように数字が続くときは続ける
     else if (EXCL_QUESTION.has(item.orig) && nextIsParticle) spaceCount = 1;
     else if (nextIsParticle) return;
     else if (SENTENCE_END.has(item.orig)) spaceCount = 2;
+    else if (CLOSERS.has(item.orig) && wordIdx > 0 && SENTENCE_END.has(mappedData[wordIdx - 1].orig)) spaceCount = 2; // 「…？」の後ろ（文末）は2マス
     else spaceCount = 1;
     for (let k = 0; k < spaceCount; k++) {
       flat.push({ dots: SPACE_MARK, char: ' ', wordIdx: -1, orig: '(Space)' });
     }
   });
 
-  return flat;
+  return insertConnectors(flat);
+}
+
+// 第1つなぎ符: 数字は「ア行・ラ行の仮名」と、アルファベットは「仮名」と同形のため、続けて書くときは間に入れる。
+const A_RA = new Set([...'あいうえおらりるれろ']);
+const KANA_START = new Set([
+  ...Object.keys(BRAILLE_MAP).filter((ch) => (ch >= '\u3041' && ch <= '\u3093') || ch === 'ー'),
+  '゛', '゜', '拗', '拗゛', '拗゜',
+]);
+
+function insertConnectors(flat: FlatCellInfo[]): FlatCellInfo[] {
+  const out: FlatCellInfo[] = [];
+  for (const cell of flat) {
+    const prev = out[out.length - 1];
+    if (prev && cell.wordIdx !== -1 && prev.wordIdx !== -1) {
+      const isDigit = /^[0-9]$/.test(prev.char);
+      const isLatin = /^[A-Za-z]$/.test(prev.char);
+      if ((isDigit && A_RA.has(cell.char)) || ((isLatin || LETTERLIKE_CHARS.has(prev.char)) && KANA_START.has(cell.char))) {
+        out.push({ dots: TSUNAGI.split('').map(Number), char: '‐', wordIdx: cell.wordIdx, orig: cell.orig });
+      }
+    }
+    out.push(cell);
+  }
+  return out;
 }
 
 const INPUT_RATIO_MIN = 0.25;

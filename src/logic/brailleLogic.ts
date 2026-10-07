@@ -7,6 +7,7 @@ export const YOON_HANDAKU_MARK: number[] = [0, 0, 0, 1, 0, 1]; // 4,6の点
 export const NUM_INDICATOR: number[]     = [0, 0, 1, 1, 1, 1]; // 数符
 export const FOREIGN_INDICATOR: number[] = [0, 0, 0, 0, 1, 1]; // 外字符
 export const SPACE_MARK: number[]        = [0, 0, 0, 0, 0, 0]; // スペース
+export const SLASH: number[]             = [0, 0, 1, 1, 0, 0]; // スラッシュ（点3,4）
 export const CAPITAL_INDICATOR: number[] = [0, 0, 0, 0, 0, 1]; // dot 6 — 英語大文字符（= HANDAKUTEN_MARK と同パターン）
 export const HYPHEN_MARK: number[]       = [0, 0, 1, 0, 0, 1]; // dots 3,6 — 英語ハイフン（行継続）
 
@@ -28,7 +29,7 @@ export const BRAILLE_MAP: Record<string, number[]> = {
   'や': [0,0,1,1,0,0], 'ゆ': [0,0,1,1,0,1], 'よ': [0,0,1,1,1,0],
   'ら': [1,0,0,0,1,0], 'り': [1,1,0,0,1,0], 'る': [1,0,0,1,1,0], 'れ': [1,1,0,1,1,0], 'ろ': [0,1,0,1,1,0],
   'わ': [0,0,1,0,0,0], 'を': [0,0,1,1,1,0], 'ん': [0,0,1,0,1,1],
-  'っ': [0,1,0,0,0,0], 'ー': [0,1,0,0,1,0], '、': [0,0,0,0,1,0], '。': [0,1,0,0,1,1], ' ': [0,0,0,0,0,0],
+  'っ': [0,1,0,0,0,0], 'ー': [0,1,0,0,1,0], '、': [0,0,0,0,1,1], '，': [0,0,0,0,1,1], '。': [0,1,0,0,1,1], ' ': [0,0,0,0,0,0], // 読点=点5,6（MEXT 点字表記法の図）
   '？': [0,1,0,0,0,1], '！': [0,1,1,0,1,0], // 疑問符(2,6)・感嘆符(2,3,5)
 };
 
@@ -68,6 +69,7 @@ export interface WordMapping {
   end: number;
   isParagraphStart?: boolean; // 段落先頭（2マス空け対象）
   pos?: string; // kuromoji 品詞（助詞・助動詞の分かち書き判定に使用）
+  attachPrev?: boolean; // 直前の語に続けて書く（接尾語・助数詞）
 }
 
 export function katakanaToHiragana(text: string): string {
@@ -100,7 +102,7 @@ export function kanaToCells(text: string): BrailleCell[] {
     return cells;
   }
 
-  let mode: 'kana' | 'number' | 'foreign' = 'kana';
+  let mode: 'kana' | 'number' | 'foreign' | 'slash' = 'kana';
   let i = 0;
   while (i < text.length) {
     const char = text[i];
@@ -120,6 +122,20 @@ export function kanaToCells(text: string): BrailleCell[] {
       continue;
     }
 
+    if (char === '/' || char === '／') {
+      // スラッシュ: 外字符で書くアルファベットの間は外字符の効力が続く。数字の間では前に外字符を置き、
+      // 後ろの数字には数符を付け直す（MEXT 点字表記法 第6章第3節 関係符号）
+      if (mode === 'number') {
+        cells.push({ dots: FOREIGN_INDICATOR, char: '外' });
+        cells.push({ dots: SLASH, char: '／' });
+        mode = 'slash';
+      } else if (mode === 'foreign') {
+        cells.push({ dots: SLASH, char: '／' });
+      }
+      i += 1;
+      continue;
+    }
+
     if (/[0-9]/.test(char)) {
       if (mode !== 'number') {
         cells.push({ dots: NUM_INDICATOR, char: '#' });
@@ -130,6 +146,12 @@ export function kanaToCells(text: string): BrailleCell[] {
       if (mode !== 'foreign') {
         cells.push({ dots: FOREIGN_INDICATOR, char: '外' });
         mode = 'foreign';
+      }
+      // 大文字符（点6）: 連続した大文字が2字以上なら2つ重ね、1字なら1つ
+      if (/[A-Z]/.test(char) && !(i > 0 && /[A-Z]/.test(text[i - 1]))) {
+        let run = 1;
+        while (i + run < text.length && /[A-Z]/.test(text[i + run])) run++;
+        for (let k = 0; k < (run >= 2 ? 2 : 1); k++) cells.push({ dots: CAPITAL_INDICATOR, char: '大' });
       }
       cells.push({ dots: BRAILLE_MAP[char.toLowerCase()] ?? SPACE_MARK, char });
     } else if (char in BRAILLE_MAP) {

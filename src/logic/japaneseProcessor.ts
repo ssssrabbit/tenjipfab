@@ -3,6 +3,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 
 import { buildTokenizerRN } from './kuromojiLoader';
 import { kanaToCells, katakanaToHiragana, fallbackConvert, SPACE_MARK, WordMapping } from './brailleLogic';
+import { resolveSpecial, SPLIT_CHARS } from './symbols';
+import { BRACKET_CHARS } from './symbols';
 
 // documentDirectory は file:// URI → kuromoji の XHR ローダーでそのまま使える
 const DICT_DIR = (FileSystem.documentDirectory ?? '') + 'kuromoji-dict/';
@@ -163,22 +165,66 @@ function makeIndentMapping(startIndex: number): WordMapping {
 }
 
 /** 単一段落のテキストをトークナイズして WordMapping[] を返す */
+// 数字の伏せ字「×」を辞書に渡すときだけ数字に置き換える（「20××年」の「年」をネンと読ませるため）。
+// 掛け算（3×4）は対象外: ×が1つで後ろに数字が続く場合は置き換えない。
+const MASK_RE = /(?<=[0-9０-９])(×{2,}|×(?![0-9０-９]))/g;
+const unmask = (text: string) => text.replace(MASK_RE, (m) => '0'.repeat(m.length));
+const SPLIT = new Set([...SPLIT_CHARS, ...BRACKET_CHARS]);
+
+interface SimpleToken { surface: string; reading?: string; pos: string; detail1: string }
+
+/** 辞書が「「＃」のように記号と括弧を1トークンにしたもの、および置き換えた伏せ字を含む数字トークンは、
+ *  元の文字列に戻して単独の記号に切り出す。 */
+const SLASH_RUN = /[A-Za-z0-9]+(?:[/／][A-Za-z0-9]+)+/;
+
+function expandTokens(text: string): SimpleToken[] {
+  const out: SimpleToken[] = [];
+  const sm = SLASH_RUN.exec(text);
+  if (sm) { // DOS/V, S/N, 125/85 のような英数字のスラッシュ区切りは1語として扱う
+    if (sm.index > 0) out.push(...expandTokens(text.slice(0, sm.index)));
+    out.push({ surface: sm[0], reading: sm[0], pos: '名詞', detail1: '一般' });
+    if (sm.index + sm[0].length < text.length) out.push(...expandTokens(text.slice(sm.index + sm[0].length)));
+    return out;
+  }
+  let off = 0;
+  for (const tok of _tokenizer.tokenize(unmask(text))) {
+    const n = tok.surface_form.length;
+    const original = text.slice(off, off + n);
+    off += n;
+    if ([...original].length > 1 && [...original].some((c) => SPLIT.has(c))) {
+      let run = '';
+      for (const c of original) {
+        if (SPLIT.has(c)) {
+          if (run) { out.push(...expandTokens(run)); run = ''; }
+          out.push({ surface: c, reading: c, pos: '記号', detail1: '一般' });
+        } else {
+          run += c;
+        }
+      }
+      if (run) out.push(...expandTokens(run));
+    } else {
+      out.push({ surface: original, reading: tok.reading, pos: tok.pos, detail1: tok.pos_detail_1 });
+    }
+  }
+  return out;
+}
+
 function tokenizeParagraph(
   text: string,
   startIndex: number
 ): WordMapping[] {
   if (!_tokenizer || !text) return [];
 
-  const tokens = _tokenizer.tokenize(text);
+  const tokens = expandTokens(text);
   const result: WordMapping[] = [];
   let currentIndex = startIndex;
 
   for (const token of tokens) {
-    const orig = token.surface_form;
+    const orig = token.surface;
 
     // 読みを取得（'*' はフォールバック）
     const readingKata =
-      token.reading && token.reading !== '*' ? token.reading : token.surface_form;
+      token.reading && token.reading !== '*' ? token.reading : token.surface;
     let reading = katakanaToHiragana(readingKata);
 
     // 点字規則1: 助詞「は」→「わ」、「へ」→「え」
@@ -200,6 +246,8 @@ function tokenizeParagraph(
       start,
       end,
       pos: token.pos,
+      // 接尾語・助数詞（円・時・分・線・玉 など）は直前の語に続けて書く
+      attachPrev: result.length > 0 && token.pos === '名詞' && token.detail1 === '接尾',
     });
   }
 
@@ -250,5 +298,6 @@ export function convertWithKuromoji(text: string): WordMapping[] {
     }
   });
 
+  resolveSpecial(result);
   return result;
 }
