@@ -12,8 +12,8 @@ blender_version_min = "5.2.0"
 
 website = "https://github.com/ssssrabbit/tenjipfab"
 
-# "or later" on purpose: the bundled Janome is Apache-2.0, which is not compatible with GPL-2.0-only.
-license = ["SPDX:GPL-2.0-or-later"]
+# extensions.blender.org requires GPL-3.0-or-later for add-ons. The bundled Janome (Apache-2.0) is compatible with GPL-3.
+license = ["SPDX:GPL-3.0-or-later"]
 copyright = ["2026 Kaname Endo"]
 
 tags = ["3D View", "Modeling", "Object"]

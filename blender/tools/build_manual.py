@@ -166,7 +166,7 @@ def build() -> str:
 <h1>{NAME} マニュアル</h1>
 <p class="lead">日本語の文章を点字に変換し、Blender の3Dモデルの表面に点として載せる拡張機能(Extension)</p>
 <a class="btn" href="{ZIP_HREF}" download>{ZIP_NAME} をダウンロード({size_mb} MB)</a>
-<p class="meta">バージョン {VERSION}(初版) / 対応: Blender 5.2 以降(動作確認は 5.2.1 LTS・macOS のみ) / ライセンス: GPL-2.0-or-later<br>
+<p class="meta">バージョン {VERSION}(初版) / 対応: Blender 5.2 以降(動作確認は 5.2.1 LTS・macOS のみ) / ライセンス: GPL-3.0-or-later<br>
 SHA-256: <code>{digest}</code></p>
 </div></header>
 
@@ -380,7 +380,7 @@ SHA-256: <code>{digest}</code></p>
 
 <h2 id="license">13. ライセンス・第三者ソフトウェア</h2>
 <ul>
-<li>{NAME} は、<strong>GNU General Public License バージョン2以降(GPL-2.0-or-later)</strong>で提供されます。無償で利用でき、ライセンスの条件の範囲で、改変・再配布できます。ライセンス全文は、zip の中の <code>LICENSE</code>、およびリポジトリにあります。</li>
+<li>{NAME} は、<strong>GNU General Public License バージョン3以降(GPL-3.0-or-later)</strong>で提供されます。無償で利用でき、ライセンスの条件の範囲で、改変・再配布できます。ライセンス全文は、zip の中の <code>LICENSE</code>、およびリポジトリにあります。</li>
 <li>形態素解析に、<strong>Janome 0.5.0</strong>(Apache License 2.0)を同梱しています。辞書は、mecab-ipadic-2.7.0-20070801(奈良先端科学技術大学院大学・ICOT の著作物)のデータを含みます。ライセンス全文と注意書きは、zip の中の <code>THIRD_PARTY/</code> にあります。</li>
 <li>点字の規則は、文部科学省「点字表記法」に基づいています。</li>
 </ul>
