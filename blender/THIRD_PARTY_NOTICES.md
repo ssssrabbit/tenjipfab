@@ -1,4 +1,10 @@
-# 第三者のソフトウェア
+# ライセンスと第三者のソフトウェア
+
+## このプロジェクトのライセンス
+- ソースコード(このリポジトリ): MIT(`LICENSE`)。
+- Blender の Extension として配布する zip: GPL-3.0-or-later(zip 内の `LICENSE`)。extensions.blender.org が、アドオンにこのライセンスを必須としているためです。
+
+## 同梱している第三者のソフトウェア
 
 このアドオンは次のライブラリを同梱しています(Extension の zip の `wheels/` と `THIRD_PARTY/` に、ライセンス全文と NOTICE を含みます)。
 

@@ -43,7 +43,7 @@ def main() -> None:
             sys.exit(f"unrewritten absolute import of 'tenji' left in {name}")
         (out / name).write_text(text)
     shutil.copy(MANIFEST, out / "blender_manifest.toml")
-    shutil.copy(ROOT / "LICENSE", out / "LICENSE")
+    shutil.copy(ROOT / "extension" / "LICENSE", out / "LICENSE")   # zip は GPL-3.0-or-later(リポジトリの LICENSE は MIT)
 
     # 2) wheels
     (out / "wheels").mkdir()
