@@ -1,12 +1,12 @@
 # Runs inside Blender (background): enable the INSTALLED extension and generate braille on a plane. Fails loudly.
 import bpy
 
-bpy.ops.preferences.addon_enable(module="bl_ext.user_default.tenji_braille")
-import bl_ext.user_default.tenji_braille as T
+bpy.ops.preferences.addon_enable(module="bl_ext.user_default.tenji_pfab")
+import bl_ext.user_default.tenji_pfab as T
 import janome
 
 assert ".local/lib" in janome.__file__, f"Janome must come from the extension's bundled wheel: {janome.__file__}"
-assert "/user_default/tenji_braille/" in T.__file__, T.__file__
+assert "/user_default/tenji_pfab/" in T.__file__, T.__file__
 
 sc = bpy.context.scene
 sc.unit_settings.scale_length = 0.001

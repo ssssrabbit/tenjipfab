@@ -22,7 +22,10 @@ import tomllib
 
 MANIFEST = tomllib.loads((ROOT / "extension" / "blender_manifest.toml").read_text())
 VERSION = MANIFEST["version"]
-ZIP_REL = f"releases/tenji_braille-{VERSION}.zip"
+NAME = MANIFEST["name"]
+ZIP_NAME = f"{MANIFEST['id']}-{VERSION}.zip"
+ZIP_REL = f"releases/{ZIP_NAME}"            # リポジトリ(blender/)からの相対パス
+ZIP_HREF = f"../{ZIP_REL}"                   # docs/index.html からの相対パス
 REPO = "https://github.com/ssssrabbit/tenjipfab"
 MEXT = "https://www.mext.go.jp/content/20231116-mxt_tokubetu01-000032539_25.pdf"
 
@@ -153,16 +156,16 @@ def build() -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tenji Braille マニュアル — 日本語点字を3Dモデルに載せる Blender アドオン</title>
-<meta name="description" content="日本語の文章を点字に変換して、Blender の3Dモデルの表面に点として載せる拡張機能 Tenji Braille の、インストール方法と使い方。">
+<title>{NAME} マニュアル — 日本語点字を3Dモデルに載せる Blender アドオン</title>
+<meta name="description" content="日本語の文章を点字に変換して、Blender の3Dモデルの表面に点として載せる拡張機能 {NAME} の、インストール方法と使い方。">
 <style>{CSS}</style>
 </head>
 <body>
 <a class="skip" href="#main">本文へ移動</a>
 <header class="top"><div class="wrap">
-<h1>Tenji Braille マニュアル</h1>
+<h1>{NAME} マニュアル</h1>
 <p class="lead">日本語の文章を点字に変換し、Blender の3Dモデルの表面に点として載せる拡張機能(Extension)</p>
-<a class="btn" href="{ZIP_REL}" download>tenji_braille-{VERSION}.zip をダウンロード({size_mb} MB)</a>
+<a class="btn" href="{ZIP_HREF}" download>{ZIP_NAME} をダウンロード({size_mb} MB)</a>
 <p class="meta">バージョン {VERSION}(初版) / 対応: Blender 5.2 以降(動作確認は 5.2.1 LTS・macOS のみ) / ライセンス: GPL-2.0-or-later<br>
 SHA-256: <code>{digest}</code></p>
 </div></header>
@@ -188,7 +191,7 @@ SHA-256: <code>{digest}</code></p>
 <main id="main">
 
 <h2 id="about">1. できること</h2>
-<p>Tenji Braille は、入力した日本語を日本語点字(6点点字)に変換し、Blender で選択した3Dモデルの表面に、点(半球状のドット)として載せる拡張機能です。
+<p>{NAME} は、入力した日本語を日本語点字(6点点字)に変換し、Blender で選択した3Dモデルの表面に、点(半球状のドット)として載せる拡張機能です。
 点字ラベルや触って分かる案内表示の、3Dプリント用モデルを作る用途を想定しています。</p>
 <ul>
 <li>テキストを入力するたびに、<strong>分かち書き → 点字への変換 → モデル上の点の生成</strong>を自動でやり直します。モデルに載せた状態を見ながら、文章や空白を調整できます。</li>
@@ -207,18 +210,18 @@ SHA-256: <code>{digest}</code></p>
 </ul>
 <h3>2.2 zip ファイルからインストールする</h3>
 <ol class="steps">
-<li>上の「<a href="{ZIP_REL}" download>tenji_braille-{VERSION}.zip をダウンロード</a>」で、zip ファイルを保存します(解凍はしません)。</li>
+<li>上の「<a href="{ZIP_HREF}" download>{ZIP_NAME} をダウンロード</a>」で、zip ファイルを保存します(解凍はしません)。</li>
 <li>Blender を起動し、メニューの <kbd>Edit</kbd> → <kbd>Preferences</kbd> を開きます。</li>
 <li>左の一覧から <kbd>Get Extensions</kbd> を選びます。</li>
 <li>画面右上の <kbd>▽</kbd>(下向き矢印)のメニューから <kbd>Install from Disk…</kbd> を選び、保存した zip ファイルを指定します。</li>
-<li>インストールすると、拡張機能の一覧に <strong>Tenji Braille</strong> が現れます。チェックが入っていれば有効です(入っていなければ、チェックを入れます)。</li>
+<li>インストールすると、拡張機能の一覧に <strong>{NAME}</strong> が現れます。チェックが入っていれば有効です(入っていなければ、チェックを入れます)。</li>
 <li>3Dビューの上にマウスを置いて <kbd>N</kbd> キーを押すと、右側にサイドバーが開きます。タブの中に <strong>Tenji</strong> があれば、準備完了です。</li>
 </ol>
 <div class="note">「Get Extensions」の画面でオンラインへの接続を求められた場合は、許可しなくても、ディスクからのインストールは行えます。</div>
 <h3>2.3 更新とアンインストール</h3>
 <ul>
 <li><strong>更新</strong>: 新しい zip を同じ手順でインストールすると、置き換わります(Blender の再起動が必要になることがあります)。</li>
-<li><strong>アンインストール</strong>: <kbd>Edit</kbd> → <kbd>Preferences</kbd> → <kbd>Get Extensions</kbd> で Tenji Braille を選び、削除(Uninstall)します。作成済みの点字のメッシュは、通常のオブジェクトとして .blend ファイルに残ります。</li>
+<li><strong>アンインストール</strong>: <kbd>Edit</kbd> → <kbd>Preferences</kbd> → <kbd>Get Extensions</kbd> で {NAME} を選び、削除(Uninstall)します。作成済みの点字のメッシュは、通常のオブジェクトとして .blend ファイルに残ります。</li>
 </ul>
 
 <h2 id="quick">3. 使い方(基本の流れ)</h2>
@@ -377,7 +380,7 @@ SHA-256: <code>{digest}</code></p>
 
 <h2 id="license">13. ライセンス・第三者ソフトウェア</h2>
 <ul>
-<li>Tenji Braille は、<strong>GNU General Public License バージョン2以降(GPL-2.0-or-later)</strong>で提供されます。無償で利用でき、ライセンスの条件の範囲で、改変・再配布できます。ライセンス全文は、zip の中の <code>LICENSE</code>、およびリポジトリにあります。</li>
+<li>{NAME} は、<strong>GNU General Public License バージョン2以降(GPL-2.0-or-later)</strong>で提供されます。無償で利用でき、ライセンスの条件の範囲で、改変・再配布できます。ライセンス全文は、zip の中の <code>LICENSE</code>、およびリポジトリにあります。</li>
 <li>形態素解析に、<strong>Janome 0.5.0</strong>(Apache License 2.0)を同梱しています。辞書は、mecab-ipadic-2.7.0-20070801(奈良先端科学技術大学院大学・ICOT の著作物)のデータを含みます。ライセンス全文と注意書きは、zip の中の <code>THIRD_PARTY/</code> にあります。</li>
 <li>点字の規則は、文部科学省「点字表記法」に基づいています。</li>
 </ul>
@@ -385,7 +388,7 @@ SHA-256: <code>{digest}</code></p>
 
 </main>
 <footer>
-<p>Tenji Braille {VERSION} / 更新履歴: {VERSION} — 初版(日本語点字、選択モデルへの点字作成、自動更新、検証)。</p>
+<p>{NAME} {VERSION} / 更新履歴: {VERSION} — 初版(日本語点字、選択モデルへの点字作成、自動更新、検証)。</p>
 </footer>
 </div>
 </body>

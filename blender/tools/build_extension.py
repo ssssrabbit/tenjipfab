@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Build the Blender Extension (zip) from the repo sources.
 
-  python3 tools/build_extension.py            # -> dist/tenji_braille-<version>.zip
+  python3 tools/build_extension.py            # -> dist/tenji_pfab-<version>.zip
 
 Repo layout (tests import `tenji` as a top-level pure-Python package) is rearranged into the Extension layout:
   <ext>/__init__.py, core.py   (from tenji_blender/, imports rewritten to the bundled subpackage)
