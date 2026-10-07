@@ -10,7 +10,7 @@ import math
 import bpy
 from mathutils import Matrix, Vector
 
-from tenji.braille import Cell, SPACE_MARK
+from tenji.braille import SPACE_MARK
 from tenji.geometry import Dims, DotPos, dome_mesh, dome_smooth_flags, layout_dots
 from tenji.japanese import mapping_from_fields, resolve_all
 from tenji.layout import build_flat_cells, layout_fixed_width, split_cells_with_rules
@@ -59,8 +59,11 @@ def _basis(normal: Vector, x_ref: Vector) -> Matrix:
 
 
 def generate(scene, *, lines, target, frame, dims: Dims, align="LEFT", k: float | None = None,
-             max_distance_mm=1000.0, warn_angle_deg=45.0) -> dict:
-    """Project dots onto `target` along -Z of `frame`. `k` = BU per mm (see bu_per_mm). Returns a report dict."""
+             max_distance_mm=1000.0, warn_angle_deg=45.0, dots=None) -> dict:
+    """Project dots onto `target` along -Z of `frame`. `k` = BU per mm (see bu_per_mm).
+
+    `dots`: the working mesh object to update (None -> a new object is created). Returns a report dict
+    whose "obj" is the object holding the dots."""
     if k is None:
         k = bu_per_mm(scene)
     cell_dots = [[c.dots for c in line] for line in lines]
@@ -112,7 +115,7 @@ def generate(scene, *, lines, target, frame, dims: Dims, align="LEFT", k: float 
     if len(mesh.polygons) == len(flags) * (len(placements) - len(missed)):
         mesh.polygons.foreach_set("use_smooth", flags * (len(placements) - len(missed)))   # ドームだけ滑らかに
         mesh.update()
-    obj = bpy.data.objects.get(DOTS_OBJECT)
+    obj = dots
     if obj is None:
         obj = bpy.data.objects.new(DOTS_OBJECT, mesh)
         scene.collection.objects.link(obj)
@@ -131,24 +134,19 @@ def generate(scene, *, lines, target, frame, dims: Dims, align="LEFT", k: float 
     }
     obj["tenji_data"] = json.dumps(data, ensure_ascii=False)
     return {
-        "object": obj.name, "cells": sum(len(l) for l in lines), "dots_expected": len(placements),
+        "obj": obj, "object": obj.name, "cells": sum(len(l) for l in lines), "dots_expected": len(placements),
         "dots_created": len(placements) - len(missed), "missed": missed[:20], "missed_count": len(missed),
         "max_incidence_deg": round(max_angle, 1), "steep_count": len(steep), "steep": steep[:20],
         "braille": ["".join(unicode_braille(c.dots) if c.dots != SPACE_MARK else "⠀" for c in l) for l in lines],
     }
 
 
-def verify(scene, dots_obj=None) -> dict:
-    """生成済みメッシュから点を逆に読み取り、期待パターンと照合する。"""
-    obj = dots_obj or bpy.data.objects[DOTS_OBJECT]
+def verify(scene, obj) -> dict:
+    """生成済みメッシュ(obj)から点を逆に読み取り、期待パターンと照合する。"""
     data = json.loads(obj["tenji_data"])
     dims = Dims(**data["dims"])
     k = data["bu_per_mm"]
-    if "frame_matrix" in data:
-        frame_world = Matrix(data["frame_matrix"])
-    else:
-        frame_world = bpy.data.objects[data["frame"]].matrix_world
-    to_frame = frame_world.inverted() @ obj.matrix_world
+    to_frame = Matrix(data["frame_matrix"]).inverted() @ obj.matrix_world
 
     # 連結成分(= 1ドット)ごとの重心を枠座標(mm)で得る
     mesh = obj.data

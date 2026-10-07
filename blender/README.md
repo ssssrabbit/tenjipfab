@@ -12,6 +12,10 @@
 テキスト → 形態素解析で読みと分かち書きを決める(Janome) → 日本語点字の規則(文部科学省「点字表記法」)で点字セルに変換
 → 選択したモデルの表面へ、視点方向にレイキャストして点を載せる。変換規則の詳細は [RULES.md](RULES.md)。
 
+## 掲載資料(extensions.blender.org)
+`store/` に、登録フォームに貼り付ける文章(`listing.md`)と、アイコン・Featured image・プレビュー画像があります。
+画像は `python3 tools/make_store_assets.py` で作り直せます。
+
 ## 開発
 ```
 # 変換ロジックのテスト(Blender 不要。Python 3.11 以降)

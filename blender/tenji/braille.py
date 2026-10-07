@@ -5,7 +5,7 @@ Port of tenji-pfab-rn/src/logic/brailleLogic.ts. Dots are 6-tuples ordered
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 Dots = tuple[int, int, int, int, int, int]
 

@@ -22,7 +22,7 @@ s.text = "点字ラベル、確認。"
 T.convert_words(s, reset=True)
 assert [w.orig for w in s.words] == ["点字", "ラベル", "、", "確認", "。"], [w.orig for w in s.words]
 rep = T.generate_now(sc, s)
-v = T.core.verify(sc)
+v = T.core.verify(sc, s.dots)
 assert rep["dots_created"] == rep["dots_expected"] == 40, rep
 assert v["ok"], v
 for op in ("place_here", "new_label", "generate", "verify", "convert"):

@@ -42,7 +42,7 @@ def _tick():
     try:
         if convert or len(s.words) == 0:
             convert_words(s, reset=False)
-        if s.target and s.frame and (len(s.words) or core.DOTS_OBJECT in bpy.data.objects):
+        if s.target and s.frame and (len(s.words) or s.dots):
             generate_now(scene, s)                  # テキストを空にしたときは、点も空にする
     except Exception as e:                      # 入力途中の状態で例外を出さない
         s.warn = f"エラー: {e}"
@@ -97,6 +97,7 @@ class TenjiSettings(PropertyGroup):
     word_index: IntProperty()
     target: PointerProperty(name="対象モデル", type=bpy.types.Object, update=on_param)
     frame: PointerProperty(name="投影枠(Empty)", type=bpy.types.Object, update=on_param)
+    dots: PointerProperty(name="作業中の点字", type=bpy.types.Object)       # 更新のたびに作り直す点のメッシュ
     cells_per_line: IntProperty(name="1行のセル数", default=10, min=1, update=on_param)
     layout_mode: EnumProperty(
         name="折り返し", default="RULES", update=on_param,
@@ -173,7 +174,8 @@ def layout_lines(s: TenjiSettings):
 def generate_now(scene, s: TenjiSettings) -> dict:
     lines = layout_lines(s)
     rep = core.generate(scene, lines=lines, target=s.target, frame=s.frame, dims=dims_of(s), align=s.align,
-                        k=core.bu_per_mm(scene, s.target, s.print_size_mm), warn_angle_deg=s.warn_angle)
+                        k=core.bu_per_mm(scene, s.target, s.print_size_mm), warn_angle_deg=s.warn_angle, dots=s.dots)
+    s.dots = rep["obj"]
     s.report = f"{rep['dots_created']}/{rep['dots_expected']}点 / {len(lines)}行 / 最大入射角 {rep['max_incidence_deg']}°"
     warn = []
     if rep["missed_count"]:
@@ -315,13 +317,14 @@ class TENJI_OT_new_label(Operator):
 
     @classmethod
     def poll(cls, context):
-        return core.DOTS_OBJECT in bpy.data.objects
+        return context.scene.tenji.dots is not None
 
     def execute(self, context):
         s = context.scene.tenji
-        bpy.data.objects[core.DOTS_OBJECT].name = "Tenji_Label"          # 同名があれば Blender が .001 を付ける
+        s.dots.name = "Tenji_Label"          # 同名があれば Blender が .001 を付ける
         _state["busy"] = True
         try:
+            s.dots = None
             s.text = ""
             s.words.clear()
             s.report = ""
@@ -336,9 +339,13 @@ class TENJI_OT_verify(Operator):
     bl_label = "検証(逆読み)"
     bl_description = "生成されたメッシュから点を読み戻し、期待する点字と一致するか確認する"
 
+    @classmethod
+    def poll(cls, context):
+        return context.scene.tenji.dots is not None
+
     def execute(self, context):
         s = context.scene.tenji
-        rep = core.verify(context.scene)
+        rep = core.verify(context.scene, s.dots)
         s.report = ("OK: " if rep["ok"] else "不一致: ") + " / ".join(rep["decoded"])
         self.report({"INFO" if rep["ok"] else "ERROR"}, s.report)
         return {"FINISHED"}

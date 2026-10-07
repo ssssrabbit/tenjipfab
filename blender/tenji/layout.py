@@ -124,9 +124,11 @@ def split_cells_with_rules(cells: list[FlatCell], max_chars: int) -> list[list[F
 
     for c in cells:
         if c.is_newline:
-            flush(); tokens.append(("newline", []))
+            flush()
+            tokens.append(("newline", []))
         elif c.word_idx == -1:
-            flush(); tokens.append(("space", []))
+            flush()
+            tokens.append(("space", []))
         else:
             buf.append(c)
     flush()
@@ -147,7 +149,8 @@ def split_cells_with_rules(cells: list[FlatCell], max_chars: int) -> list[list[F
 
     for kind, wcells in tokens:
         if kind == "newline":
-            commit(); continue
+            commit()
+            continue
         if kind == "space":
             if cur and len(cur) < max_chars:
                 cur.append(FlatCell(SPACE_MARK, " ", -1, "(Space)"))
@@ -165,18 +168,22 @@ def split_cells_with_rules(cells: list[FlatCell], max_chars: int) -> list[list[F
         remaining = list(units)
         while remaining:
             if max_chars - len(cur) <= 0:
-                commit(); continue
+                commit()
+                continue
             k = 0
             while k < len(remaining):
                 need = len(remaining[k]) + (0 if k == len(remaining) - 1 else 1)
                 if len(cur) + need <= max_chars:
-                    cur.extend(remaining[k]); k += 1
+                    cur.extend(remaining[k])
+                    k += 1
                 else:
                     break
             if k == 0:
                 if cur:
-                    commit(); continue
-                cur.extend(remaining[0]); k = 1
+                    commit()
+                    continue
+                cur.extend(remaining[0])
+                k = 1
             remaining = remaining[k:]
             if remaining:
                 if len(cur) < max_chars:
