@@ -743,7 +743,7 @@ const styles = StyleSheet.create({
     color: AppColors.TEXT_MAIN,
   },
   textOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     flex: 0,
   },
   languageWarning: {
