@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>User Manual — Tenji P-Fab</title>
+<meta name="description" content="Reference for every feature of Tenji P-Fab: input, preview, reading correction, output settings, history and saving.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="brand" href="index_en.html">Tenji P-Fab</a><a class="nav" href="index_en.html">About</a><a class="nav" href="tutorial_en.html">Tutorial</a><a class="nav" href="manual_en.html" aria-current=page>Manual</a><a class="nav" href="support_en.html">Support</a><a class="nav" href="privacy_en.html">Privacy</a>
+<a class="lang" href="manual.html" hreflang="ja">日本語</a>
+</div></header>
+<main>
+<h1>User Manual</h1>
+<p class="lead">A reference for every feature of Tenji P-Fab. If you are new, start with the <a href="tutorial_en.html">Tutorial</a>.</p>
+<ul>
+<li><a href="#screen">1. Screen layout</a></li><li><a href="#input">2. Input and preview</a></li><li><a href="#reading">3. Correcting a reading</a></li>
+<li><a href="#warn">4. “Many characters cannot be converted” warning</a></li><li><a href="#settings">5. Output settings</a></li><li><a href="#history">6. History</a></li>
+<li><a href="#save">7. Saving (exporting the ZIP)</a></li><li><a href="#lang">8. Braille language</a></li>
+</ul>
+
+<h2 id="screen">1. Screen layout</h2>
+<table>
+<tr><th>Where</th><th>What</th></tr>
+<tr><td>Preview (top)</td><td>Shows the braille for your text, plate by plate (<code>Plate #1</code>, <code>Plate #2</code>…).</td></tr>
+<tr><td>“Input Text” (bottom)</td><td>The text field and the blue “Save” button.</td></tr>
+<tr><td>Icons (top right)</td><td>Clock = history / gear = output settings / download = save (same as the “Save” button).</td></tr>
+</table>
+
+<h2 id="input">2. Input and preview</h2>
+<p>The preview updates as you type. Characters per line and lines per plate come from the <a href="#settings">output settings</a>; longer text is split across several plates.</p>
+
+<h2 id="reading">3. Correcting a reading</h2>
+<p>Kanji readings are determined automatically and can be wrong, especially for proper nouns. Tap a braille cell in the preview to open the reading editor for that word. Enter the reading in <strong>hiragana</strong> and tap “Save” to update the braille.</p>
+
+<h2 id="warn">4. “Many characters cannot be converted” warning</h2>
+<p>When many of the characters cannot be converted (about 30% or more of the input), the app shows a warning. This usually means the braille language does not match the text; tap the warning and check the <a href="#lang">braille language</a>. Unconvertible characters are highlighted in the input field.</p>
+
+<h2 id="settings">5. Output settings</h2>
+<p>Open them with the gear icon. Changes show up in the preview right away.</p>
+<table>
+<tr><th>Setting</th><th>Range</th><th>Default</th></tr>
+<tr><td>Characters per line</td><td>5–30</td><td>10</td></tr>
+<tr><td>Lines per plate</td><td>1–10</td><td>3</td></tr>
+<tr><td>Plate thickness (mm)</td><td>0.5–2.0 (steps of 0.1)</td><td>1.0</td></tr>
+<tr><td>Dot height (mm)</td><td>0.2–1.0 (steps of 0.05)</td><td>0.4</td></tr>
+<tr><td>Braille language</td><td>Japanese / English</td><td>Japanese</td></tr>
+</table>
+<div class="note"><p>Dot height directly affects how the print feels to the touch. If it feels sharp, try a lower value and print a test.</p></div>
+
+<h2 id="history">6. History</h2>
+<p>When you tap Save, the text and settings are kept on your device as history (up to the 20 most recent). Open it with the clock icon and tap an entry to restore that text and its settings. “Clear” removes all entries.</p>
+
+<h2 id="save">7. Saving (exporting the ZIP)</h2>
+<p>Tapping “Save” creates a ZIP and opens the share sheet. Choose “Save to Files”, AirDrop, etc.</p>
+<div class="warn"><p>The ZIP can’t be printed as is. <strong>Extract it and use <code>plate_XX.obj</code> or <code>plate_XX.stl</code> inside.</strong> See the <a href="tutorial_en.html#zip">Tutorial</a> for the contents and how to take the files out.</p></div>
+
+<h2 id="lang">8. Braille language</h2>
+<p>Switch between “Japanese” and “English” in the settings. This is independent of the app’s display language (which follows your device), so you can make English braille on a Japanese-language device.</p>
+
+<h2>See also</h2>
+<ul><li><a href="tutorial_en.html">Tutorial</a></li><li><a href="support_en.html">Support</a></li><li><a href="privacy_en.html">Privacy Policy</a></li></ul>
+</main>
+<footer>
+<a href="../../index_en.html">Existing product page</a> · <a href="https://github.com/ssssrabbit/tenjipfab">Source code</a> · <a href="../../blender/docs/">Blender add-on</a> · <a href="https://github.com/ssssrabbit/tenjipfab/issues">Contact (GitHub Issues)</a>
+<p>© Tenji P-Fab</p>
+</footer>
+</body>
+</html>
