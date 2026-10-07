@@ -1,0 +1,25 @@
+schema_version = "1.0.0"
+
+id = "tenji_braille"
+version = "0.1.0"
+name = "Tenji Braille"
+tagline = "Project Japanese braille text onto 3D models"
+maintainer = "Kaname Endo"
+type = "add-on"
+
+# Developed and tested on Blender 5.2.1 LTS only.
+blender_version_min = "5.2.0"
+
+website = "https://github.com/ssssrabbit/tenjipfab"
+
+# "or later" on purpose: the bundled Janome is Apache-2.0, which is not compatible with GPL-2.0-only.
+license = ["SPDX:GPL-2.0-or-later"]
+copyright = ["2026 Kaname Endo"]
+
+tags = ["3D View", "Modeling", "Object"]
+
+# Janome (pure Python, includes the IPAdic dictionary). Downloaded by tools/build_extension.py.
+wheels = ["./wheels/Janome-0.5.0-py2.py3-none-any.whl"]
+
+[build]
+paths_exclude_pattern = ["__pycache__/", "*.pyc", ".DS_Store"]

@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""Generate docs/index.html (the Japanese user manual) from this script.
+
+Braille examples are produced by the real conversion code (tenji/), so they cannot drift from the add-on.
+Screenshots live in docs/images/ (taken from Blender). The SHA-256 of the release zip is embedded.
+
+  python3 tools/build_manual.py
+"""
+import hashlib
+import html
+import pathlib
+import re
+import sys
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(ROOT))
+
+from tenji.braille import SPACE_MARK
+from tenji.japanese import convert, fold_whitespace
+from tenji.layout import build_flat_cells, layout_fixed_width, split_cells_with_rules
+import tomllib
+
+MANIFEST = tomllib.loads((ROOT / "extension" / "blender_manifest.toml").read_text())
+VERSION = MANIFEST["version"]
+ZIP_REL = f"releases/tenji_braille-{VERSION}.zip"
+REPO = "https://github.com/ssssrabbit/tenjipfab"
+MEXT = "https://www.mext.go.jp/content/20231116-mxt_tokubetu01-000032539_25.pdf"
+
+
+def braille(dots) -> str:
+    return chr(0x2800 + sum(1 << i for i, on in enumerate(dots) if on))
+
+
+def render(text: str, cells_per_line: int = 40, mode: str = "RULES", auto_space: bool = True) -> list[str]:
+    """テキスト -> 点字(Unicode)の行。アドオンと同じ処理(手で入れた空白 = ちょうどそのマス数)。"""
+    mapped = []
+    for m, typed in fold_whitespace(convert(text)):
+        m.gap = typed if typed >= 0 else (None if auto_space else 0)
+        mapped.append(m)
+    flat = build_flat_cells(mapped)
+    lines = split_cells_with_rules(flat, cells_per_line) if mode == "RULES" else layout_fixed_width(flat, cells_per_line)
+    return ["".join(braille(c.dots) if c.dots != SPACE_MARK else "⠀" for c in line) for line in lines]
+
+
+def b(text: str, **kw) -> str:
+    return "<br>".join(f'<span class="braille" aria-hidden="true">{l}</span>' for l in render(text, **kw))
+
+
+def esc(s: str) -> str:
+    return html.escape(s, quote=False)
+
+
+def example(text: str, label: str = "", **kw) -> str:
+    return (f'<div class="ex"><div class="ex-src"><span class="ex-label">{esc(label or "入力")}</span> {esc(text)}</div>'
+            f'<div class="ex-out">{b(text, **kw)}</div></div>')
+
+
+def sha256(path: pathlib.Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest() if path.exists() else "(未生成)"
+
+
+# ------------------------------------------------------------------ 対応している点字の表
+SYMBOL_ROWS = [
+    ("かな", [("こんにちは", ""), ("ありがとう", ""), ("ぱぴぷぺぽ", "半濁音")]),
+    ("濁音・拗音・促音・長音", [("学校", "濁音・促音(「がっこー」)"), ("きょうと", "拗音"), ("東京", "長音(「とーきょー」)"), ("ラーメン", "")]),
+    ("助詞の読み", [("私は学校へ行く", "「は」→「わ」、「へ」→「え」")]),
+    ("数字(数符)", [("100円", ""), ("3個", ""), ("3らしい", "数字の後ろのア行・ラ行はつなぎ符")]),
+    ("英字(外字符・大文字符)", [("ABC", ""), ("NHKの番組", "英字の連続は大文字符を2つ"), ("X線", "英字の後ろの仮名はつなぎ符"), ("DOS/V", "スラッシュ")]),
+    ("句読点・疑問符・感嘆符", [("はい、そうです。", ""), ("本当ですか？そうです。", ""), ("やった！", ""), ("東大寺・春日大社", "中点")]),
+    ("括弧", [("「こんにちは」", "かぎ括弧"), ("先生は、「みんなの前で話すときは『伝えよう』が大切です。」と言った。", "入れ子(ふたえかぎ)"),
+            ("（注）", "かっこ"), ("〈こんにちは。〉", "第2かぎ")]),
+    ("記号", [("20％引き", "パーセント"), ("Q&A", "アンド"), ("＊11は短縮番号", "アスタリスク"), ("「＃点字」", "ナンバー"), ("5個＠200円", "アット")]),
+    ("範囲・矢印・数字の伏せ字", [("10時～12時", "波線"), ("東京8時→長野10時", "矢印"), ("20××年", "数字の伏せ字"), ("内線1××4番", "")]),
+    ("点線・棒線", [("そして…。", "点線"), ("のれんに腕押し――糠に釘", "棒線")]),
+]
+
+
+def symbol_table() -> str:
+    rows = []
+    for cat, items in SYMBOL_ROWS:
+        for i, (text, note) in enumerate(items):
+            head = f'<th scope="row" rowspan="{len(items)}">{esc(cat)}</th>' if i == 0 else ""
+            rows.append(f'<tr>{head}<td>{esc(text)}</td><td class="braille-cell"><span class="braille" aria-hidden="true">{render(text, 60)[0] if len(render(text, 60)) == 1 else "<br>".join(render(text, 60))}</span></td><td>{esc(note)}</td></tr>')
+    return ('<table><caption>点字の例(上の入力をこのアドオンで変換した結果)</caption><thead><tr><th>種類</th><th>入力</th><th>点字</th><th>備考</th></tr></thead><tbody>'
+            + "\n".join(rows) + "</tbody></table>")
+
+
+CSS = """
+:root{--bg:#fff;--fg:#1c1c1e;--muted:#5a5a5f;--line:#d7d7dc;--accent:#0a5fd0;--soft:#f3f5f9;--warn:#fff4e0;--warn-line:#e0a030}
+@media (prefers-color-scheme:dark){:root{--bg:#161618;--fg:#ececf0;--muted:#a0a0a8;--line:#3a3a40;--accent:#6aa6ff;--soft:#202024;--warn:#2d2616;--warn-line:#a6781d}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.85 system-ui,-apple-system,"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",Meiryo,sans-serif}
+a{color:var(--accent)}
+.skip{position:absolute;left:-999px}.skip:focus{left:8px;top:8px;background:var(--bg);padding:6px 10px;z-index:9}
+header.top{padding:34px 20px 26px;border-bottom:1px solid var(--line);background:var(--soft)}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px}
+header.top .wrap{padding:0}
+h1{font-size:1.9rem;line-height:1.35;margin:0 0 6px}
+.lead{color:var(--muted);margin:0 0 18px}
+.btn{display:inline-block;background:var(--accent);color:#fff;padding:10px 20px;border-radius:8px;text-decoration:none;font-weight:700}
+.btn:focus-visible,a:focus-visible{outline:3px solid #ffb000;outline-offset:2px}
+.meta{font-size:.88rem;color:var(--muted);margin-top:12px;word-break:break-all}
+nav.toc{border:1px solid var(--line);border-radius:10px;padding:14px 20px;margin:28px 0;background:var(--soft)}
+nav.toc ol{margin:6px 0 0;padding-left:1.4em;columns:2;column-gap:28px}
+@media (max-width:640px){nav.toc ol{columns:1}}
+h2{font-size:1.45rem;margin:2.6em 0 .6em;padding-bottom:.25em;border-bottom:2px solid var(--line)}
+h3{font-size:1.12rem;margin:1.8em 0 .4em}
+p,li{max-width:46em}
+figure{margin:1.2em 0}
+figure img{max-width:100%;height:auto;border:1px solid var(--line);border-radius:8px;background:#3e3e3e}
+figure.side{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+figure.side img{max-width:min(100%,340px)}
+figcaption{font-size:.9rem;color:var(--muted);margin-top:6px}
+table{border-collapse:collapse;width:100%;margin:1em 0;font-size:.95rem}
+caption{text-align:left;color:var(--muted);padding:4px 0}
+th,td{border:1px solid var(--line);padding:7px 10px;vertical-align:top;text-align:left}
+thead th{background:var(--soft)}
+tbody th{background:var(--soft);white-space:nowrap}
+code,kbd{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.92em;background:var(--soft);border:1px solid var(--line);border-radius:4px;padding:0 .3em}
+.btnlabel{font-weight:700}
+.note,.warn{border-left:5px solid var(--accent);background:var(--soft);padding:10px 16px;border-radius:0 8px 8px 0;margin:1.2em 0}
+.warn{border-left-color:var(--warn-line);background:var(--warn)}
+.ex{border:1px solid var(--line);border-radius:8px;margin:.9em 0;overflow:hidden}
+.ex-src{padding:6px 12px;background:var(--soft);font-size:.95rem}
+.ex-label{display:inline-block;font-size:.78rem;color:var(--muted);border:1px solid var(--line);border-radius:4px;padding:0 6px;margin-right:6px}
+.ex-out{padding:8px 12px}
+.braille{font-size:1.9rem;line-height:1.4;letter-spacing:.06em;font-family:"Apple Braille","Segoe UI Symbol","DejaVu Sans","Noto Sans Symbols 2",sans-serif;word-break:break-all}
+.braille-cell{min-width:12em}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:14px}
+footer{margin:4em 0 2em;padding-top:1em;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
+ol.steps>li{margin:.5em 0}
+"""
+
+
+def build() -> str:
+    zip_path = ROOT / ZIP_REL
+    digest = sha256(zip_path)
+    size_mb = f"{zip_path.stat().st_size / 1e6:.1f}" if zip_path.exists() else "?"
+
+    # 空白の例
+    t1 = "点字で作るクマの人形"
+    sp_auto = example(t1, "空白を入れない(自動)", cells_per_line=40)
+    sp_typed = example("点字で  作る クマの人形", "「で」の後ろに空白2つ、「作る」の後ろに1つ", cells_per_line=40)
+    sp_off = example("点字で 作る クマの人形", "「空白を自動で入れる」をオフ + 空白を2か所", cells_per_line=40, auto_space=False)
+    sp_off0 = example(t1, "「空白を自動で入れる」をオフ + 空白なし", cells_per_line=40, auto_space=False)
+    wrap_text = "点字で作るクマの人形です"
+    wrap_rules = example(wrap_text, "点字の規則で折り返す(1行8セル)", cells_per_line=8, mode="RULES")
+    wrap_fixed = example(wrap_text, "1行のセル数で並べる(1行8セル)", cells_per_line=8, mode="FIXED")
+
+    return f"""<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tenji Braille マニュアル — 日本語点字を3Dモデルに載せる Blender アドオン</title>
+<meta name="description" content="日本語の文章を点字に変換して、Blender の3Dモデルの表面に点として載せる拡張機能 Tenji Braille の、インストール方法と使い方。">
+<style>{CSS}</style>
+</head>
+<body>
+<a class="skip" href="#main">本文へ移動</a>
+<header class="top"><div class="wrap">
+<h1>Tenji Braille マニュアル</h1>
+<p class="lead">日本語の文章を点字に変換し、Blender の3Dモデルの表面に点として載せる拡張機能(Extension)</p>
+<a class="btn" href="{ZIP_REL}" download>tenji_braille-{VERSION}.zip をダウンロード({size_mb} MB)</a>
+<p class="meta">バージョン {VERSION}(初版) / 対応: Blender 5.2 以降(動作確認は 5.2.1 LTS・macOS のみ) / ライセンス: GPL-2.0-or-later<br>
+SHA-256: <code>{digest}</code></p>
+</div></header>
+
+<div class="wrap">
+<nav class="toc" aria-label="目次"><strong>目次</strong>
+<ol>
+<li><a href="#about">できること</a></li>
+<li><a href="#install">インストール</a></li>
+<li><a href="#quick">使い方(基本の流れ)</a></li>
+<li><a href="#panel">パネルの説明</a></li>
+<li><a href="#spaces">空白(分かち書き)と読みの調整</a></li>
+<li><a href="#wrap">折り返し</a></li>
+<li><a href="#size">サイズと3Dプリント</a></li>
+<li><a href="#curved">曲面に載せる</a></li>
+<li><a href="#multi">複数のラベルを作る</a></li>
+<li><a href="#braille">対応している点字</a></li>
+<li><a href="#trouble">困ったときは</a></li>
+<li><a href="#limits">制限事項</a></li>
+<li><a href="#license">ライセンス・第三者ソフトウェア</a></li>
+</ol></nav>
+
+<main id="main">
+
+<h2 id="about">1. できること</h2>
+<p>Tenji Braille は、入力した日本語を日本語点字(6点点字)に変換し、Blender で選択した3Dモデルの表面に、点(半球状のドット)として載せる拡張機能です。
+点字ラベルや触って分かる案内表示の、3Dプリント用モデルを作る用途を想定しています。</p>
+<ul>
+<li>テキストを入力するたびに、<strong>分かち書き → 点字への変換 → モデル上の点の生成</strong>を自動でやり直します。モデルに載せた状態を見ながら、文章や空白を調整できます。</li>
+<li>点字の規則は、文部科学省「<a href="{MEXT}">点字表記法</a>」(第6章第3節)に基づいています(句読点、括弧、数符、外字符、つなぎ符など)。</li>
+<li>点の間隔・大きさ・高さは、JIS の標準寸法を既定値として、自由に変えられます。3Dプリントの出力サイズに合わせた換算もできます。</li>
+<li>生成した点が、本当にその点字になっているかを、メッシュから読み戻して確かめる「検証(逆読み)」があります。</li>
+</ul>
+<figure><img src="images/view-plate.png" alt="板のモデルの表面に、3行の点字が半球状の点として並んでいる。" width="1000">
+<figcaption>板(80×40×6 mm)に「こんにちは、点字ラベルです。」を載せた例(真上から見たところ)。</figcaption></figure>
+
+<h2 id="install">2. インストール</h2>
+<h3>2.1 必要なもの</h3>
+<ul>
+<li>Blender 5.2 以降(動作確認は Blender 5.2.1 LTS・macOS のみです。Windows / Linux や、ほかのバージョンでは確認していません)。</li>
+<li>インターネット接続は不要です。このアドオンは通信を行いません。</li>
+</ul>
+<h3>2.2 zip ファイルからインストールする</h3>
+<ol class="steps">
+<li>上の「<a href="{ZIP_REL}" download>tenji_braille-{VERSION}.zip をダウンロード</a>」で、zip ファイルを保存します(解凍はしません)。</li>
+<li>Blender を起動し、メニューの <kbd>Edit</kbd> → <kbd>Preferences</kbd> を開きます。</li>
+<li>左の一覧から <kbd>Get Extensions</kbd> を選びます。</li>
+<li>画面右上の <kbd>▽</kbd>(下向き矢印)のメニューから <kbd>Install from Disk…</kbd> を選び、保存した zip ファイルを指定します。</li>
+<li>インストールすると、拡張機能の一覧に <strong>Tenji Braille</strong> が現れます。チェックが入っていれば有効です(入っていなければ、チェックを入れます)。</li>
+<li>3Dビューの上にマウスを置いて <kbd>N</kbd> キーを押すと、右側にサイドバーが開きます。タブの中に <strong>Tenji</strong> があれば、準備完了です。</li>
+</ol>
+<div class="note">「Get Extensions」の画面でオンラインへの接続を求められた場合は、許可しなくても、ディスクからのインストールは行えます。</div>
+<h3>2.3 更新とアンインストール</h3>
+<ul>
+<li><strong>更新</strong>: 新しい zip を同じ手順でインストールすると、置き換わります(Blender の再起動が必要になることがあります)。</li>
+<li><strong>アンインストール</strong>: <kbd>Edit</kbd> → <kbd>Preferences</kbd> → <kbd>Get Extensions</kbd> で Tenji Braille を選び、削除(Uninstall)します。作成済みの点字のメッシュは、通常のオブジェクトとして .blend ファイルに残ります。</li>
+</ul>
+
+<h2 id="quick">3. 使い方(基本の流れ)</h2>
+<p>パネルの一番上に、次にやることが案内として表示されます。</p>
+<ol class="steps">
+<li><strong>点字を載せたいモデルを選択する。</strong>メッシュのオブジェクトを、クリックで選びます。選択していないうちは、「選択モデルに点字作成」ボタンは灰色で、押せません。
+<figure class="side"><img src="images/panel-1-initial.png" alt="何も選択していない状態のパネル。「① モデルを選択してください」と表示され、「選択モデルに点字作成」ボタンが灰色になっている。" width="470">
+<img src="images/panel-2-selected.png" alt="モデルを選択した状態のパネル。「② 面を正面に向けて押す」と表示され、「選択モデルに点字作成」ボタンが押せる状態になっている。" width="470">
+<figcaption>左: 何も選択していない状態。右: モデルを選択した状態。</figcaption></figure></li>
+<li><strong>点字を載せたい面を、正面に向ける。</strong>3Dビューを回して、載せたい面をまっすぐ見る向きにします。画面の中央が、点字を置く場所になります。
+(上から載せるなら、テンキーの <kbd>7</kbd> で真上からの視点にします。)</li>
+<li><strong>「選択モデルに点字作成」を押す。</strong>選択中のモデルが対象になり、いま見ている向きに合わせて、点字を載せる位置と向きが決まります。
+画面の右が読む方向、下が次の行、奥の面に向かって点が載ります。</li>
+<li><strong>テキストを入力する。</strong>「テキスト」の欄に日本語を入力すると、入力に合わせて点字がモデルの上に作られます。
+<figure><img src="images/panel-3-text.png" alt="テキストを入力した状態のパネル。語の一覧に「こんにちは」「、」「点字」「ラベル」「です」「。」が並び、それぞれの読みと後ろの空白が表示されている。下に「55/55点 / 3行 / 最大入射角 0.0°」と表示されている。" width="470">
+<figcaption>入力後のパネル。語ごとに読みと「後ろの空白」が一覧され、下に生成の結果が出る。</figcaption></figure></li>
+<li><strong>調整する。</strong>モデルの上の点字を見ながら、テキストや空白、1行のセル数などを変えます(変えるたびに、自動で作り直されます)。
+読みが違う語は、一覧の「読み」の欄を直接書き換えます。位置を変えたいときは、3Dビューを動かして「選択モデルに点字作成」を押し直します。</li>
+<li><strong>確かめる。</strong>「検証(逆読み)」を押すと、生成した点から点字を読み戻し、期待どおりかを確認できます(結果はパネルに出ます)。</li>
+<li><strong>仕上げる。</strong>点字は、通常のメッシュ(<code>Tenji_Dots</code>)として作られます。モデルと一体にしたり、STL などで書き出したりするのは、Blender の通常の操作で行ってください(このアドオンは書き出し機能を持ちません)。
+続けて別の点字を作る場合は、先に「新規点字」を押します(<a href="#multi">複数のラベルを作る</a>)。</li>
+</ol>
+<div class="warn"><strong>ご注意</strong>: 「新規点字」を押さずにテキストを変えると、いまある点字は新しい内容で<strong>上書き</strong>されます。残したい点字は、先に「新規点字」で確定してください。</div>
+
+<h2 id="panel">4. パネルの説明</h2>
+<p>サイドバーの <strong>Tenji</strong> タブにある「点字」パネルの項目です。</p>
+<table><caption>パネルの項目</caption><thead><tr><th>項目</th><th>説明</th></tr></thead><tbody>
+<tr><th scope="row">選択モデルに点字作成</th><td>選択中のメッシュを対象にして、いま見ている向き・画面中央の位置に、点字を載せる枠を作ります。押し直すと、いまの点字がその場所へ移ります。メッシュを選択しているときだけ押せます。</td></tr>
+<tr><th scope="row">テキスト</th><td>点字にする日本語。入力するたびに更新されます。改行は段落の区切りになり、2マス空けて始まります。</td></tr>
+<tr><th scope="row">語の一覧</th><td>テキストを語に区切った結果。左から「元の語」「読み」「後ろの空白」。読みは書き換えられます。「後ろの空白」は、自動 / なし / 1マス / 2マスから選びます(<a href="#spaces">詳しくは</a>)。</td></tr>
+<tr><th scope="row">読みを作り直す</th><td>テキストから語の一覧を作り直します。手で直した読みと空白の指定は、すべてリセットされます。</td></tr>
+<tr><th scope="row">1行のセル数</th><td>1行に並べる点字のマス(セル)の数。</td></tr>
+<tr><th scope="row">折り返し</th><td>「点字の規則で折り返す」(既定)または「1行のセル数で並べる」(<a href="#wrap">詳しくは</a>)。</td></tr>
+<tr><th scope="row">配置</th><td>「左揃え」: 点字ブロックの左上を、枠の位置に合わせます。「中央揃え」: ブロックの中心を、枠の位置に合わせます(行数や文字数が変わっても中心が動きません)。「選択モデルに点字作成」を押すと「中央揃え」になります。</td></tr>
+<tr><th scope="row">空白を自動で入れる</th><td>オン(既定): 点字の規則に従って、分かち書きの空白を自動で入れます。オフ: テキストに自分で入れた空白だけを使います。</td></tr>
+<tr><th scope="row">自動で更新</th><td>オン(既定): テキストや設定を変えるたび、枠やモデルを動かすたびに、点を作り直します。オフにすると、「手動更新」を押したときだけ更新されます。</td></tr>
+<tr><th scope="row">手動更新</th><td>いまの設定で、点を作り直します。</td></tr>
+<tr><th scope="row">検証(逆読み)</th><td>生成した点のメッシュから点字を読み戻して、期待どおりか確認します。一致すれば「OK」と点字が、点が欠けているなどで違えば「不一致」と表示されます。</td></tr>
+<tr><th scope="row">新規点字</th><td>いまの点字を確定して(通常のメッシュ <code>Tenji_Label</code> として残して)、テキストを空にし、新しい点字を作り始めます。</td></tr>
+<tr><th scope="row">詳細(対象・枠)</th><td>対象のモデルと、点字を載せる枠(Empty、名前は <code>Tenji_Frame</code>)を、直接指定する欄。通常は「選択モデルに点字作成」が自動で設定するので、触る必要はありません。</td></tr>
+<tr><th scope="row">サイズ</th><td>点字の寸法の設定(下の表)。</td></tr>
+</tbody></table>
+<figure><img src="images/panel-4-open.png" alt="「詳細(対象・枠)」と「サイズ」を開いた状態のパネル。サイズには、点間2.40、セル間6.00、行間10.00、点径1.50、点高さ0.30、埋め込み0.20、出力サイズ0.00、警告角度45.00の各項目がある。" width="470">
+<figcaption>「詳細(対象・枠)」と「サイズ」を開いたところ。どちらも、見出しをクリックして開閉できます。</figcaption></figure>
+<table><caption>「サイズ」の項目(単位はすべて mm)</caption><thead><tr><th>項目</th><th>既定値</th><th>説明</th></tr></thead><tbody>
+<tr><th scope="row">点間</th><td>2.4</td><td>1つのセルの中で、隣り合う点の中心間の距離。</td></tr>
+<tr><th scope="row">セル間</th><td>6.0</td><td>隣り合うセルの、左上の点どうしの距離。</td></tr>
+<tr><th scope="row">行間</th><td>10.0</td><td>隣り合う行の、上の点どうしの距離。</td></tr>
+<tr><th scope="row">点径</th><td>1.5</td><td>点(半球)の底の直径。</td></tr>
+<tr><th scope="row">点高さ</th><td>0.3</td><td>点の高さ。触ったときの感触を考えて、低めの値にしてあります。印刷条件や好みで調整してください。</td></tr>
+<tr><th scope="row">埋め込み</th><td>0.2</td><td>点を、モデルの表面より下へ潜らせる深さ。曲面で、点とモデルの間にすき間ができないようにします。</td></tr>
+<tr><th scope="row">出力サイズ</th><td>0(無効)</td><td>対象モデルの最長辺を、印刷したときに何 mm にするか(<a href="#size">詳しくは</a>)。</td></tr>
+<tr><th scope="row">警告角度</th><td>45°</td><td>モデルの表面が点字の向きに対してこの角度より傾いている点を、「急斜面」として数えて警告します。</td></tr>
+</tbody></table>
+<p>寸法の既定値(点間 2.4 mm、セル間 6.0 mm)は、日本の点字の標準的な寸法です。点径・高さ・行間・埋め込みは、このアドオンでの目安の値です。</p>
+
+<h2 id="spaces">5. 空白(分かち書き)と読みの調整</h2>
+<p>点字では、語の区切りに1マスの空白を入れます(分かち書き)。このアドオンは、形態素解析で語の区切りを決めて、点字の規則に従って空白を自動で入れますが、
+解析は完全ではなく、また、モデルの大きさによって、空白を入れる・入れないで見た目が大きく変わります。次の方法で調整できます。</p>
+<h3>5.1 テキストに空白を直接入力する(基本)</h3>
+<p>テキストの好きな位置に空白を入力すると、<strong>入力した数のマスの空白</strong>になります(規則で入る自動の空白には足されません)。空白を入れなかった場所は、規則で自動に決まります。</p>
+{sp_auto}
+{sp_typed}
+<h3>5.2 空白を自動で入れない</h3>
+<p>「空白を自動で入れる」をオフにすると、テキストに入力した空白だけが使われます。短いラベルで、空白を自分で全部決めたいときに向いています。</p>
+{sp_off}
+{sp_off0}
+<h3>5.3 語ごとに指定する</h3>
+<p>語の一覧の右の列(「後ろの空白」)で、その語の後ろの空白を、自動 / なし / 1マス / 2マスから選べます。テキストへの入力より優先されます。</p>
+<h3>5.4 読みを直す</h3>
+<p>漢字の読みは辞書(Janome)で決めるため、間違うことがあります。語の一覧の「読み」の欄を直接書き換えると、その読みで点字になります
+(ひらがなで入力します)。読みの欄に空白を入れると、語の途中でも区切れます。テキストを編集しても、直した読みは、同じ語に引き継がれます。</p>
+<div class="note">「点字の規則」では、助詞(「は」→「わ」、「へ」→「え」)や長音(「とうきょう」→「とーきょー」)の読み替えも、自動で行われます。</div>
+
+<h2 id="wrap">6. 折り返し</h2>
+<p>1行のセル数に収まらない文章は、複数の行に分けます。分け方は2通りから選べます(既定は「点字の規則で折り返す」)。</p>
+<ul>
+<li><strong>点字の規則で折り返す</strong>: 語を行にまたがせません。1行に収まらない長い語は、音節で切って、行末に「ー」を付けて次の行に続けます。</li>
+<li><strong>1行のセル数で並べる</strong>: セルを左から順に並べ、1行のセル数に達したら折り返します(語の途中でも折り返し、「ー」は付けません)。濁点などの前置符号は、本字と離しません。行頭には空白を置きません。</li>
+</ul>
+{wrap_rules}
+{wrap_fixed}
+
+<h2 id="size">7. サイズと3Dプリント</h2>
+<h3>7.1 単位の考え方</h3>
+<p>「サイズ」の寸法は mm で指定します。Blender のシーンの単位に応じて、次のように換算されます。</p>
+<ul>
+<li><strong>出力サイズが 0(既定)</strong>: シーンの単位に従います。シーンの単位を「ミリメートル」(<kbd>Scene Properties</kbd> の <kbd>Units</kbd> で、Unit Scale を 0.001、Length を Millimeters)にしておくと、1 Blender 単位 = 1 mm になり、モデルの寸法がそのまま mm になります。</li>
+<li><strong>出力サイズを指定する</strong>: 対象モデルの最長辺が、印刷したときに何 mm になるかを入力します。モデルの大きさ(Blender 単位)がいくつでも、点字は、印刷後に指定の寸法(点間 2.4 mm など)になるように作られます。
+3Dプリンターに出すときにモデルを拡大・縮小する場合に便利です。</li>
+</ul>
+<div class="note">例: 最長辺が 2.0(単位なし)のモデルに、出力サイズ 100 を指定すると、印刷後の長さが 100 mm になる前提で、点字の点間が 2.4 mm 相当の大きさで作られます。モデルの大きさを変えたときは、「手動更新」を押して作り直してください(自動更新がオンなら自動で更新されます)。</div>
+<h3>7.2 点の高さ</h3>
+<p>点高さの既定値は 0.3 mm です。触ったときの感触を考えて、低めにしてあります。プリンターの積層ピッチや、使う人の好みに合わせて調整してください。</p>
+<div class="warn">実際の3Dプリントでの仕上がり(点の高さの出方・触り心地)は、これからの確認事項です。印刷条件によっては、点が十分に立ち上がらないことがあります。試し刷りで確認することをお勧めします。</div>
+<h3>7.3 モデルと一体にする・書き出す</h3>
+<p>点は、モデルの表面に <strong>0.2 mm 埋め込まれた</strong>状態で作られます。結合(<kbd>Ctrl</kbd>+<kbd>J</kbd>)やブーリアン演算で、モデルと一体にしてから、STL などで書き出してください。書き出しは Blender の標準機能を使います。</p>
+
+<h2 id="curved">8. 曲面に載せる</h2>
+<p>点は、視点の向きに沿って、モデルの表面に載ります(各点の位置を、表面に射影します)。点の根元は、その場所の表面に合わせて傾きます。</p>
+<figure><img src="images/view-cylinder.png" alt="円柱の曲面に、点字の点が表面に沿って並んでいる。" width="900">
+<figcaption>円柱(半径 30 mm)の曲面に載せた例。</figcaption></figure>
+<ul>
+<li>向いているのは、<strong>平面〜緩やかな曲面</strong>です。球のように強く曲がった面や、端に近い面では、点の間隔が縮んで読みにくくなります。</li>
+<li>モデルの面の傾きが「警告角度」を超える点は、パネルに「急斜面」として数が表示されます。</li>
+<li>強い曲面に載せたいときは、まず<strong>平面(または平面に近い面)に点字を作ってから、Blender の Bend などで、点字のメッシュごとモデルの形に曲げる</strong>ことをお勧めします。</li>
+</ul>
+
+<h2 id="multi">9. 複数のラベルを作る</h2>
+<p>点字を作っている間は、1つの「作業中の点字」(<code>Tenji_Dots</code>)だけを更新します。別のラベルを作りたいときは、「新規点字」を押します。</p>
+<ol class="steps">
+<li>1つ目の点字ができたら、「新規点字」を押します。いまの点字は、通常のメッシュ <code>Tenji_Label</code> として残り、テキストが空になります。</li>
+<li>3Dビューを動かして、次に載せる場所を中央にし、「選択モデルに点字作成」を押します(または、枠の Empty を動かします)。</li>
+<li>テキストを入力します。</li>
+</ol>
+<figure><img src="images/view-two-labels.png" alt="板の上側に「ようこそ」、下側に「ありがとう」の点字が、2つ並んでいる。" width="1000">
+<figcaption>「ようこそ」を作って「新規点字」で確定し、位置を変えて「ありがとう」を作った例。</figcaption></figure>
+<p>確定した <code>Tenji_Label</code> は通常のメッシュなので、あとから、このアドオンでテキストを編集し直すことはできません。やり直すときは、オブジェクトを削除して、作り直してください。</p>
+
+<h2 id="braille">10. 対応している点字</h2>
+{symbol_table()}
+<p>規則の根拠は、文部科学省「<a href="{MEXT}">点字表記法</a>」(第6章第3節)です。表の点字は、このアドオンでの変換結果です。</p>
+<h3>対応していないもの</h3>
+<ul>
+<li>英語点字(英語の文章の点字表記)。日本語の文章に含まれる英字・数字の表記(外字符・数符)にだけ対応しています。</li>
+<li>空欄符号、強調の指示符、段落挿入符、小見出し符、点訳挿入符など、試験問題や書籍の点訳で使う符号。</li>
+<li>○△□×の伏せ字(数字の伏せ字「×」だけ、対応しています)。</li>
+<li>文脈で書き方が変わるもの。日付の略記(1/23 など)は「1月23日」のようには書き換えず、スラッシュのまま点字になります。地名の段階の区切り(東京・神田)も、空白への読み替えはせず、中点のまま点字になります。</li>
+</ul>
+<div class="warn">自動の変換(読み・分かち書き)は、完全ではありません。公共の施設の案内など、正確さが求められる点字は、点訳の経験のある方による確認をお勧めします。</div>
+
+<h2 id="trouble">11. 困ったときは</h2>
+<table><thead><tr><th>症状</th><th>確認すること</th></tr></thead><tbody>
+<tr><th scope="row">「選択モデルに点字作成」が押せない</th><td>3Dビューで、メッシュのオブジェクトを選択してください(点字のオブジェクト <code>Tenji_*</code>、空のオブジェクト(Empty)、カメラなどでは押せません)。</td></tr>
+<tr><th scope="row">点字が作られない</th><td>パネルの案内(①②③)を確認してください。テキストが空のとき、また、枠をまだ作っていないときは、何も作られません。「自動で更新」がオフなら、「手動更新」を押してください。</td></tr>
+<tr><th scope="row">「モデルに当たらない点」と出る</th><td>点字ブロックが、モデルの面からはみ出しています。文章を短くする、1行のセル数を減らす、行間やセル間を小さくする、載せる位置をずらす、のいずれかで調整してください。</td></tr>
+<tr><th scope="row">点字が裏返っている・向きが違う</th><td>点字は、「選択モデルに点字作成」を押したときの視点に合わせて、画面の右へ向かって読む向きに作られます。載せたい面を正面から見て押し直してください。</td></tr>
+<tr><th scope="row">読みが違う</th><td>語の一覧の「読み」の欄を、ひらがなで直接書き換えてください。</td></tr>
+<tr><th scope="row">語の途中に空白が入る(例: 「がっ こう」)</th><td>辞書による語の区切りが不自然になっています。語の一覧で、その語の「後ろの空白」を「なし」にしてください。ひらがなだけの文章で起こりやすいです。</td></tr>
+<tr><th scope="row">空白の入り方を変えたい</th><td><a href="#spaces">5. 空白(分かち書き)と読みの調整</a>を参照してください。</td></tr>
+<tr><th scope="row">点のまわりがちらついたり、ざらついて見える</th><td>Blender の3Dビューの描画の精度の問題で、データには影響しません。サイドバーの <kbd>View</kbd> タブで、<kbd>Clip Start</kbd> を大きく(例: 10〜30)、<kbd>Clip End</kbd> を小さく(例: 500)すると改善します。ミリメートル単位のシーンで、モデルから離れて見ているときに起こりやすい現象です。</td></tr>
+<tr><th scope="row">逆読みが「不一致」になる</th><td>点が一部欠けていることが主な原因です(「モデルに当たらない点」を確認してください)。確定したあとに、モデルや点字のメッシュを手で動かした場合も、一致しなくなります。</td></tr>
+<tr><th scope="row">操作が重い</th><td>点の数が非常に多い場合や、ポリゴン数の多いモデルでは、更新に時間がかかることがあります。「自動で更新」をオフにして、必要なときだけ「手動更新」を押してください。</td></tr>
+</tbody></table>
+
+<h2 id="limits">12. 制限事項</h2>
+<ul>
+<li>動作確認は、Blender 5.2.1 LTS(macOS)だけです。</li>
+<li>実際の3Dプリントでの確認は、これからです。</li>
+<li>強い曲面では、点の間隔が縮みます(<a href="#curved">曲面に載せる</a>)。</li>
+<li>1つのシーンで、作業中の点字は1つです。複数のラベルは、「新規点字」で確定しながら作ります。</li>
+<li>確定した点字は、テキストを再編集できません。</li>
+<li>日本語点字のみ対応しています。</li>
+<li><strong>分かち書き(語の区切り)は、辞書による自動判定で、不完全です。</strong>特に、ひらがなだけの語は、区切りが不自然になり、語の途中に余分な空白が入ることがあります(例: 「がっこう」が「がっ こう」になる)。また、「お」「第」などの接頭語の後ろに空白が入ることがあります。そのようなときは、語の一覧で「後ろの空白」を「なし」にするか、「空白を自動で入れる」をオフにして空白を自分で入力してください(<a href="#spaces">5. 空白の調整</a>)。漢字かな交じりの文章のほうが、区切りが安定します。</li>
+</ul>
+
+<h2 id="license">13. ライセンス・第三者ソフトウェア</h2>
+<ul>
+<li>Tenji Braille は、<strong>GNU General Public License バージョン2以降(GPL-2.0-or-later)</strong>で提供されます。無償で利用でき、ライセンスの条件の範囲で、改変・再配布できます。ライセンス全文は、zip の中の <code>LICENSE</code>、およびリポジトリにあります。</li>
+<li>形態素解析に、<strong>Janome 0.5.0</strong>(Apache License 2.0)を同梱しています。辞書は、mecab-ipadic-2.7.0-20070801(奈良先端科学技術大学院大学・ICOT の著作物)のデータを含みます。ライセンス全文と注意書きは、zip の中の <code>THIRD_PARTY/</code> にあります。</li>
+<li>点字の規則は、文部科学省「点字表記法」に基づいています。</li>
+</ul>
+<p>ソースコード・不具合の報告・ご意見: <a href="{REPO}">{REPO}</a>(<code>blender/</code> ディレクトリ)。</p>
+
+</main>
+<footer>
+<p>Tenji Braille {VERSION} / 更新履歴: {VERSION} — 初版(日本語点字、選択モデルへの点字作成、自動更新、検証)。</p>
+</footer>
+</div>
+</body>
+</html>
+"""
+
+
+if __name__ == "__main__":
+    out = ROOT / "docs" / "index.html"
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(build())
+    print("wrote", out, f"({out.stat().st_size / 1024:.0f} KB)")
