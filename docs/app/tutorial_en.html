@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tutorial — Tenji P-Fab</title>
+<meta name="description" content="How to use Tenji P-Fab, and how to take the OBJ/STL files for your 3D printer out of the saved ZIP.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="brand" href="index_en.html">Tenji P-Fab</a><a class="nav" href="index_en.html">About</a><a class="nav" href="tutorial_en.html" aria-current=page>Tutorial</a><a class="nav" href="privacy_en.html">Privacy</a>
+<a class="lang" href="tutorial.html" hreflang="ja">日本語</a>
+</div></header>
+<main>
+<h1>Tutorial</h1>
+<p class="lead">From typing text to saving, and how to take the files your 3D printer needs out of the saved ZIP.</p>
+<ul>
+<li><a href="#basic">1. Make a braille plate</a></li>
+<li><a href="#settings">2. Output settings</a></li>
+<li><a href="#zip"><strong>3. What’s inside the ZIP, and how to get the 3D-printer file</strong></a></li>
+<li><a href="#print">4. Print with your slicer</a></li>
+<li><a href="#faq">FAQ</a></li>
+</ul>
+
+<h2 id="basic">1. Make a braille plate</h2>
+<ol class="steps">
+<li><strong>Type your text</strong>Enter Japanese text in “Input Text” at the bottom. The braille appears in the preview above.</li>
+<li><strong>Check the readings</strong>If a kanji reading is wrong, correct it from the preview.</li>
+<li><strong>Tap “Save”</strong>Use the blue “Save” button or the download icon at the top right. The share sheet opens.</li>
+<li><strong>Choose where to save</strong>“Save to Files” stores it on your iPhone / iPad. You can also AirDrop it straight to a computer.</li>
+</ol>
+
+<h2 id="settings">2. Output settings</h2>
+<p>Open them with the gear icon at the top right.</p>
+<table>
+<tr><th>Setting</th><th>Meaning</th></tr>
+<tr><td>Characters per line</td><td>Number of braille cells per line; sets the plate width.</td></tr>
+<tr><td>Lines per plate</td><td>Lines on one plate. Longer text is split into several plates (<code>plate_01</code>, <code>plate_02</code>…).</td></tr>
+<tr><td>Plate thickness (mm)</td><td>Thickness of the base.</td></tr>
+<tr><td>Dot height (mm)</td><td>How far the dots rise; affects how the print feels to the touch.</td></tr>
+<tr><td>Braille language</td><td>Japanese or English braille. Independent of the app’s display language.</td></tr>
+</table>
+
+<h2 id="zip">3. What’s inside the ZIP, and how to get the 3D-printer file</h2>
+<div class="warn"><p><strong>The saved ZIP can’t be sent to a 3D printer as is.</strong> It is a container holding your original text, braille data, a guide sheet and the 3D models. <strong>Extract it and take out the <code>.obj</code> (or <code>.stl</code>) file</strong>, then open that in your slicer.</p></div>
+
+<figure><svg viewBox="0 0 760 370" role="img" aria-label="Extract the saved ZIP; the file you send to the 3D printer is plate_XX.obj or plate_XX.stl" xmlns="http://www.w3.org/2000/svg">
+<rect x="10" y="95" width="190" height="150" rx="16" fill="#fff4e0" stroke="#ff9500" stroke-width="3"/>
+<rect x="80" y="112" width="50" height="40" rx="6" fill="#ffd89b" stroke="#ff9500" stroke-width="2"/><path d="M105 112v40" stroke="#ff9500" stroke-width="2" stroke-dasharray="5 4"/>
+<text x="105" y="185" text-anchor="middle" font-size="15" font-weight="700" fill="#1c1c1e" font-family="ui-monospace,Menlo,monospace">tenji_export_….zip</text>
+<text x="105" y="210" text-anchor="middle" font-size="13" fill="#c25e00">Everything in one ZIP</text>
+<path d="M205 170 H390" stroke="#8e8e93" stroke-width="3" fill="none" marker-end="url(#a)"/>
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8e8e93"/></marker></defs>
+<text x="297" y="155" text-anchor="middle" font-size="14" font-weight="700" fill="#c25e00">① Extract</text>
+<g transform="translate(420,20)"><rect width="300" height="54" rx="10" fill="#e8f6ee" stroke="#34c759" stroke-width="3"/><text x="14" y="23" font-size="17" font-weight="700" fill="#1c1c1e" font-family="ui-monospace,Menlo,monospace">plate_01.obj</text><text x="14" y="43" font-size="13" fill="#5c5c63">3D model for printing (OBJ)</text></g><g transform="translate(420,86)"><rect width="300" height="54" rx="10" fill="#e8f6ee" stroke="#34c759" stroke-width="3"/><text x="14" y="23" font-size="17" font-weight="700" fill="#1c1c1e" font-family="ui-monospace,Menlo,monospace">plate_01.stl</text><text x="14" y="43" font-size="13" fill="#5c5c63">3D model for printing (STL)</text></g><g transform="translate(420,152)"><rect width="300" height="54" rx="10" fill="#f2f2f7" stroke="#c7c7cc" stroke-width="1.5"/><text x="14" y="23" font-size="17" font-weight="700" fill="#1c1c1e" font-family="ui-monospace,Menlo,monospace">braille.bse</text><text x="14" y="43" font-size="13" fill="#5c5c63">Braille data (BSE text)</text></g><g transform="translate(420,218)"><rect width="300" height="54" rx="10" fill="#f2f2f7" stroke="#c7c7cc" stroke-width="1.5"/><text x="14" y="23" font-size="17" font-weight="700" fill="#1c1c1e" font-family="ui-monospace,Menlo,monospace">guide_sheet.html</text><text x="14" y="43" font-size="13" fill="#5c5c63">Print-and-read guide sheet (opens in browser)</text></g><g transform="translate(420,284)"><rect width="300" height="54" rx="10" fill="#f2f2f7" stroke="#c7c7cc" stroke-width="1.5"/><text x="14" y="23" font-size="17" font-weight="700" fill="#1c1c1e" font-family="ui-monospace,Menlo,monospace">original_text.txt</text><text x="14" y="43" font-size="13" fill="#5c5c63">Your original text</text></g>
+<text x="570" y="352" text-anchor="middle" font-size="14" font-weight="700" fill="#1d8a3f">▲ Green = ② the files for your 3D printer</text>
+</svg><figcaption>The file name is <code>tenji_export_&lt;date-time&gt;.zip</code>. With several plates you also get <code>plate_02</code>, <code>plate_03</code>…</figcaption></figure>
+
+<table class="files">
+<tr><th>File</th><th>Contents</th><th>Use</th></tr>
+<tr><td><code>plate_01.obj</code><span class="tag print">print this</span></td><td>3D model of the braille plate (OBJ). Contains two parts: the base (<code>plate</code>) and the dots (<code>dots</code>).</td><td>3D printer (slicer)</td></tr>
+<tr><td><code>plate_01.stl</code><span class="tag print">print this</span></td><td>The same plate as an STL model.</td><td>3D printer (slicer)</td></tr>
+<tr><td><code>braille.bse</code><span class="tag other">reference</span></td><td>The braille as ASCII text (BSE format).</td><td>Braille software, etc.</td></tr>
+<tr><td><code>guide_sheet.html</code><span class="tag other">reference</span></td><td>A sheet showing each plate’s braille next to the original characters.</td><td>Open in a browser and compare with the text</td></tr>
+<tr><td><code>original_text.txt</code><span class="tag other">reference</span></td><td>The text you entered.</td><td>Record keeping</td></tr>
+</table>
+<p><code>.obj</code> and <code>.stl</code> describe the same shape in different formats. <strong>Use just one</strong> — whichever your slicer supports.</p>
+
+<h3>Extracting the ZIP</h3>
+<table>
+<tr><th>Device</th><th>How</th></tr>
+<tr><td>iPhone / iPad</td><td>In the Files app, <strong>tap</strong> the ZIP. It is extracted into a folder next to it. Send <code>plate_01.obj</code> etc. from that folder to a compatible app or your computer with the share button.</td></tr>
+<tr><td>Mac</td><td>Double-click the ZIP; it is extracted next to it.</td></tr>
+<tr><td>Windows</td><td>Right-click the ZIP → “Extract All”.</td></tr>
+<tr><td>Android</td><td>Tap the ZIP in your file manager and extract it.</td></tr>
+</table>
+<div class="note"><p><strong>Tip:</strong> Putting the ZIP itself on an SD card or USB stick, or loading it into a printer app, won’t work. Use the extracted <code>.obj</code> / <code>.stl</code>.</p></div>
+
+<h2 id="print">4. Print with your slicer</h2>
+<ol class="steps">
+<li><strong>Open your slicer</strong>Any slicer that reads STL / OBJ works (for example Bambu Studio, PrusaSlicer or Cura).</li>
+<li><strong>Load the file</strong>Open <code>plate_01.obj</code> (or <code>.stl</code>) by drag-and-drop or from the menu. Units are millimetres. If asked whether to load it as multiple parts, load it so the plate and dots are printed together.</li>
+<li><strong>Check orientation</strong>The dots should face up (they do as loaded).</li>
+<li><strong>Slice and print</strong>A fine layer height is recommended to keep the dots crisp.</li>
+<li><strong>Several plates?</strong>Print <code>plate_02</code>, <code>plate_03</code>… the same way.</li>
+</ol>
+
+<div class="ok"><p><strong>About the feel of the dots:</strong> sharp printed dots can be uncomfortable on sensitive fingertips. Try different “Dot height” values, print a test and feel it yourself.</p></div>
+
+<h2 id="faq">FAQ</h2>
+<h3>My 3D printer or slicer gives an error when I load the ZIP</h3>
+<p>Extract the ZIP first and load <code>plate_XX.obj</code> or <code>plate_XX.stl</code> from inside.</p>
+<h3>I tried to print the HTML file / it won’t open</h3>
+<p><code>guide_sheet.html</code> is a reference sheet, not printer data. Open it in a web browser.</p>
+<h3>I can’t find the saved file</h3>
+<p>If you chose “Save to Files”, it is in the location you picked in the Files app.</p>
+<h3>Is my data sent anywhere?</h3>
+<p>No. See the <a href="privacy_en.html">Privacy Policy</a>.</p>
+</main>
+<footer>
+<a href="../../index_en.html">Existing product page</a> · <a href="https://github.com/ssssrabbit/tenjipfab">Source code</a> · <a href="../../blender/docs/">Blender add-on</a> · <a href="https://github.com/ssssrabbit/tenjipfab/issues">Contact (GitHub Issues)</a>
+<p>© Tenji P-Fab</p>
+</footer>
+</body>
+</html>

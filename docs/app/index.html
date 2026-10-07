@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tenji P-Fab — スマホでつくる、触れる言葉。</title>
+<meta name="description" content="日本語を入力すると点字に変換し、3Dプリンター用のデータ(OBJ/STL)を作成する iOS アプリ。">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top"><div class="bar">
+<a class="brand" href="index.html">Tenji P-Fab</a><a class="nav" href="index.html" aria-current=page>紹介</a><a class="nav" href="tutorial.html">使い方</a><a class="nav" href="privacy.html">プライバシー</a>
+<a class="lang" href="index_en.html" hreflang="en">English</a>
+</div></header>
+<main>
+<section class="hero"><div>
+<h1>スマホでつくる、<br>触れる言葉。</h1>
+<p class="lead">日本語を入力すると点字に変換し、3Dプリンターで出力できる点字プレートのデータを作ります。専門知識は要りません。</p>
+<p><a class="btn" href="https://apps.apple.com/us/app/tenji-p-fab/id6757128401">App Store で入手</a><a class="btn alt" href="tutorial.html">使い方を見る</a></p>
+</div><img src="../../images/appstore_screenshot_iphone.png" alt="Tenji P-Fab の画面"></section>
+
+<h2>できること</h2>
+<div class="grid">
+<div class="card"><h3>日本語 → 点字</h3><p>形態素解析で読みを求め、分かち書き・数字・記号を点字表記の規則に沿って変換します。読みはプレビュー上で修正できます。</p></div>
+<div class="card"><h3>3D プリンター用データ</h3><p>点字プレートを OBJ と STL で書き出します。1行の文字数・1プレートの行数・厚さ・ドットの高さを設定できます。</p></div>
+<div class="card"><h3>1つの ZIP にまとめて保存</h3><p>原文、点字データ、確認シート、3D モデルが1つの ZIP に入ります。</p></div>
+<div class="card"><h3>オフラインで動作</h3><p>変換はすべて端末内で完了します。入力した文章が外部に送られることはありません。</p></div>
+</div>
+
+<h2>ご利用の流れ</h2>
+<ol class="steps">
+<li><strong>文章を入力</strong>点字プレビューが即座に表示されます。</li>
+<li><strong>「保存」を押す</strong>ZIP ファイルが作られ、共有シートから「“ファイル”に保存」や AirDrop で保存できます。</li>
+<li><strong>ZIP を展開して、OBJ/STL を 3D プリンターへ</strong>ZIP そのものは出力できません。<a href="tutorial.html#zip">ZIP の中身と取り出し方</a>をご覧ください。</li>
+</ol>
+
+<div class="warn"><p><strong>3D プリンターで出力するには:</strong> 保存した ZIP を展開し、中の <code>plate_01.obj</code>(または <code>plate_01.stl</code>)をスライサーで開きます。 → <a href="tutorial.html#zip">詳しい手順</a></p></div>
+
+<h2>関連</h2>
+<ul>
+<li><a href="tutorial.html">使い方チュートリアル</a></li>
+<li><a href="privacy.html">プライバシーポリシー</a></li>
+<li><a href="../../blender/docs/">Blender アドオン版(3D モデルの曲面に点字を載せる)</a></li>
+</ul>
+</main>
+<footer>
+<a href="../../index.html">既存の紹介ページ</a> · <a href="https://github.com/ssssrabbit/tenjipfab">ソースコード</a> · <a href="../../blender/docs/">Blender アドオン版</a> · <a href="https://github.com/ssssrabbit/tenjipfab/issues">お問い合わせ (GitHub Issues)</a>
+<p>© Tenji P-Fab</p>
+</footer>
+</body>
+</html>
