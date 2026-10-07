@@ -54,8 +54,8 @@ assets/
 ## トラブルシューティング
 
 ### `No such module 'Expo'` / `Module map file '…/EXConstants.modulemap' not found`
-Xcode で **`ios/tenjipfabrn.xcodeproj` を直接開いている** のが原因です(Pods が含まれず、Expo などのモジュールが作られません)。
-**`ios/tenjipfabrn.xcworkspace` を開いて**ビルドしてください(または `npx expo run:ios`)。
+Xcode で **`ios/TenjiPFab.xcodeproj` を直接開いている** のが原因です(Pods が含まれず、Expo などのモジュールが作られません)。
+**`ios/TenjiPFab.xcworkspace` を開いて**ビルドしてください(または `npx expo run:ios`)。
 Xcode で開いたファイルは、DerivedData の `info.plist` の `WorkspacePath` でも確認できます。
 
 ### `IPHONEOS_DEPLOYMENT_TARGET is set to 13.4, but the range of supported deployment target versions is 15.0 to …`
