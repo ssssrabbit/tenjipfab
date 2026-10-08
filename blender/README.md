@@ -4,7 +4,7 @@
 点字ラベルや触知案内の3Dプリント用モデルを、Blender 上でテキストを入力しながら作れます。
 
 - **マニュアル**: [docs/index.html](docs/index.html)(GitHub Pages: https://ssssrabbit.github.io/tenjipfab/blender/docs/)
-- **配布ファイル**: [releases/tenji_pfab-0.1.0.zip](releases/tenji_pfab-0.1.0.zip)(Blender の「Install from Disk」でインストール)
+- **配布ファイル**: [releases/tenji_pfab-0.1.1.zip](releases/tenji_pfab-0.1.1.zip)(Blender の「Install from Disk」でインストール)
 - 動作確認: Blender 5.2.1 LTS(macOS)のみ。
 - ライセンス: **ソースコード(このリポジトリ)は MIT**([LICENSE](LICENSE))。Blender の Extension として配布する zip は、extensions.blender.org の要件(アドオンは GPL-3.0-or-later)に合わせて **GPL-3.0-or-later**([extension/LICENSE](extension/LICENSE))で提供します(同じ作者による二重のライセンス提供)。同梱ライブラリは [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照。
 

@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 
 id = "tenji_pfab"
-version = "0.1.0"
+version = "0.1.1"
 name = "Tenji P-Fab:Japanese Braille"
 tagline = "Project Japanese braille text onto 3D models"
 maintainer = "Kaname Endo"

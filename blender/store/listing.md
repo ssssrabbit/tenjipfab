@@ -45,9 +45,16 @@ https://github.com/ssssrabbit/tenjipfab/issues
 
 (リポジトリ自身の課題管理を、サポートの URL にします。マニュアル: https://ssssrabbit.github.io/tenjipfab/blender/docs/)
 
-## Release notes(0.1.0)
+## Release notes(0.1.1)
 
 ```markdown
+**0.1.1**
+
+- Removed all threading (the background dictionary pre-load) and the depsgraph handler that rebuilt the dots when the frame or the target moved.
+- New "更新" (Update) button: redoes word splitting, braille conversion and dot generation in one step.
+- "自動で更新" (auto update) is now optional and off by default.
+- Tag changed to "Add Mesh".
+
 **0.1.0 — Initial release / 初版**
 
 - Create Japanese braille on the surface of the selected mesh with one button ("選択モデルに点字作成").

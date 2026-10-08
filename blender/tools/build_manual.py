@@ -166,7 +166,7 @@ def build() -> str:
 <h1>{NAME} マニュアル</h1>
 <p class="lead">日本語の文章を点字に変換し、Blender の3Dモデルの表面に点として載せる拡張機能(Extension)</p>
 <a class="btn" href="{ZIP_HREF}" download>{ZIP_NAME} をダウンロード({size_mb} MB)</a>
-<p class="meta">バージョン {VERSION}(初版) / 対応: Blender 5.2 以降(動作確認は 5.2.1 LTS・macOS のみ) / ライセンス: 配布版(この zip)は GPL-3.0-or-later、ソースコードは MIT<br>
+<p class="meta">バージョン {VERSION} / 対応: Blender 5.2 以降(動作確認は 5.2.1 LTS・macOS のみ) / ライセンス: 配布版(この zip)は GPL-3.0-or-later、ソースコードは MIT<br>
 SHA-256: <code>{digest}</code></p>
 </div></header>
 
@@ -389,7 +389,7 @@ SHA-256: <code>{digest}</code></p>
 
 </main>
 <footer>
-<p>{NAME} {VERSION} / 更新履歴: {VERSION} — 初版(日本語点字、選択モデルへの点字作成、更新ボタン、検証)。</p>
+<p>{NAME} {VERSION} / 更新履歴: 0.1.1 — スレッド処理と、枠・モデルの移動を検知する自動再生成を廃止。「更新」ボタンを追加し、「自動で更新」は任意(既定はオフ)に変更。 / 0.1.0 — 初版(日本語点字、選択モデルへの点字作成、検証)。</p>
 </footer>
 </div>
 </body>
