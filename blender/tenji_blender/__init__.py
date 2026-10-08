@@ -1,6 +1,5 @@
 """Tenji: Japanese braille -> projected dots on a surface."""
 import difflib
-import threading
 import time
 
 import bpy
@@ -12,7 +11,7 @@ from tenji.geometry import Dims
 
 from . import core
 
-# ---------------------------------------------------------------- 自動更新(デバウンス付き)
+# ---------------------------------------------------------------- 自動更新(任意。既定はオフ。デバウンス付き。スレッドは使わない)
 
 DEBOUNCE = 0.15          # 入力が止まってからこの秒数後にまとめて更新する
 _state = {"convert": False, "last": 0.0, "busy": False}
@@ -40,31 +39,12 @@ def _tick():
         return None
     _state["busy"] = True
     try:
-        if convert or len(s.words) == 0:
-            convert_words(s, reset=False)
-        if s.target and s.frame and (len(s.words) or s.dots):
-            generate_now(scene, s)                  # テキストを空にしたときは、点も空にする
+        update_all(scene, s, convert=convert)
     except Exception as e:                      # 入力途中の状態で例外を出さない
         s.warn = f"エラー: {e}"
     finally:
         _state["busy"] = False
     return None
-
-
-def _xform_key(s):
-    ms = [s.target.matrix_world, s.frame.matrix_world]
-    return tuple(round(v, 6) for m in ms for row in m for v in row)
-
-
-def _on_depsgraph(scene, depsgraph=None):
-    """枠や対象モデルを動かしたら、点を作り直す(位置を見ながら調整できるように)。"""
-    s = getattr(scene, "tenji", None)
-    if s is None or not s.live or not s.target or not s.frame or _state["busy"]:
-        return
-    key = _xform_key(s)
-    if key != _state.get("xf"):
-        _state["xf"] = key
-        request()
 
 
 def on_text(self, context):
@@ -106,8 +86,8 @@ class TenjiSettings(PropertyGroup):
     align: EnumProperty(name="配置", update=on_param, items=[("LEFT", "左揃え", ""), ("CENTER", "中央揃え", "")])
     auto_space: BoolProperty(name="空白を自動で入れる", default=True, update=on_param,
                              description="オン: 分かち書きの空白を点字の規則で自動で入れる。オフ: テキストに手で入れた空白だけを使う")
-    live: BoolProperty(name="自動で更新", default=True,
-                       description="テキストや設定を変えるたびに、分かち書き・点字変換・モデル上の生成をやり直す")
+    live: BoolProperty(name="自動で更新", default=False,
+                       description="テキストや設定を変えるたびに、分かち書き・点字変換・モデル上の生成をやり直す。重いモデルでは、オフのまま「更新」を使う")
     dot_pitch: FloatProperty(name="点間 (mm)", default=2.4, min=0.1, update=on_param)
     cell_pitch: FloatProperty(name="セル間 (mm)", default=6.0, min=0.1, update=on_param)
     line_pitch: FloatProperty(name="行間 (mm)", default=10.0, min=0.1, update=on_param)
@@ -186,12 +166,12 @@ def generate_now(scene, s: TenjiSettings) -> dict:
     return rep
 
 
-def _prewarm():
-    try:
-        from tenji.japanese import _get_tokenizer
-        _get_tokenizer()
-    except Exception:
-        pass
+def update_all(scene, s: TenjiSettings, convert: bool = True) -> None:
+    """分かち書き・点字変換・モデル上の生成を、いまのテキストと設定でやり直す。"""
+    if convert or len(s.words) == 0:
+        convert_words(s, reset=False)
+    if s.target and s.frame and (len(s.words) or s.dots):
+        generate_now(scene, s)                      # テキストを空にしたときは、点も空にする
 
 
 # ---------------------------------------------------------------- オペレーター
@@ -202,8 +182,10 @@ class TENJI_OT_convert(Operator):
     bl_description = "テキストを分かち書きして読み一覧を作り直す(手で直した読み・空白はリセットされる)"
 
     def execute(self, context):
-        convert_words(context.scene.tenji, reset=True)
-        request()
+        s = context.scene.tenji
+        convert_words(s, reset=True)
+        if s.target and s.frame and len(s.words):
+            generate_now(context.scene, s)
         return {"FINISHED"}
 
 
@@ -275,6 +257,8 @@ class TENJI_OT_place_here(Operator):
         s = context.scene.tenji
         s.target = context.active_object
         place_frame_from_view(context)
+        if s.text or len(s.words):
+            update_all(context.scene, s)
         return {"FINISHED"}
 
 
@@ -294,17 +278,17 @@ class TENJI_OT_create_frame_from_view(Operator):
 
 class TENJI_OT_generate(Operator):
     bl_idname = "tenji.generate"
-    bl_label = "手動更新"
-    bl_description = "今の設定でモデル上に点字を生成し直す(「自動で更新」がオンなら、変更のたびに自動で行われる)"
+    bl_label = "更新"
+    bl_description = "いまのテキストと設定で、分かち書き・点字変換・モデル上の生成をやり直す"
 
     @classmethod
     def poll(cls, context):
         s = context.scene.tenji
-        return s.target and s.frame and len(s.words) > 0
+        return s.target and s.frame and (len(s.text) > 0 or len(s.words) > 0)
 
     def execute(self, context):
         s = context.scene.tenji
-        generate_now(context.scene, s)
+        update_all(context.scene, s)
         self.report({"WARNING" if s.warn else "INFO"}, s.report + ("  " + s.warn.replace("\n", " / ") if s.warn else ""))
         return {"FINISHED"}
 
@@ -398,7 +382,7 @@ class TENJI_PT_main(Panel):
         col.separator()
         row = col.row(align=True)
         row.prop(s, "live", toggle=True, icon="FILE_REFRESH")
-        row.operator("tenji.generate", text="手動更新")
+        row.operator("tenji.generate", text="更新")
         col.operator("tenji.verify")
         col.operator("tenji.new_label", icon="ADD")
         if s.report:
@@ -452,19 +436,9 @@ def register():
     for c in CLASSES:
         bpy.utils.register_class(c)
     bpy.types.Scene.tenji = PointerProperty(type=TenjiSettings)
-    _remove_handler()
-    bpy.app.handlers.depsgraph_update_post.append(_on_depsgraph)
-    threading.Thread(target=_prewarm, daemon=True).start()      # 辞書の読み込みを裏で済ませておく
-
-
-def _remove_handler():
-    for h in list(bpy.app.handlers.depsgraph_update_post):
-        if getattr(h, "__name__", "") == "_on_depsgraph":
-            bpy.app.handlers.depsgraph_update_post.remove(h)
 
 
 def unregister():
-    _remove_handler()
     if bpy.app.timers.is_registered(_tick):
         bpy.app.timers.unregister(_tick)
     del bpy.types.Scene.tenji

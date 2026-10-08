@@ -8,12 +8,12 @@ Name / Tagline / License / Maintainer などは、zip の `blender_manifest.toml
 ```markdown
 **Project Japanese braille onto the surface of your 3D models.**
 
-Type Japanese text and this add-on converts it to Japanese braille (6-dot) and places the dots on the surface of the selected mesh. It is made for tactile labels and 3D-printable models. Conversion, word spacing and line breaks update live while you type, so you can adjust the text to fit the model.
+Type Japanese text and this add-on converts it to Japanese braille (6-dot) and places the dots on the surface of the selected mesh. It is made for tactile labels and 3D-printable models. Press "更新" (Update) to redo conversion, word spacing, line breaks and dot generation, so you can adjust the text to fit the model. An optional "自動で更新" (auto update) toggle, off by default, does this on every change.
 
 ### Features
 - Japanese text to braille: readings and word spacing are decided by morphological analysis (Janome); braille rules follow the Japanese Ministry of Education (MEXT) braille notation guidelines (punctuation, brackets, numbers, Latin letters, joining marks and more).
 - One button: select a mesh, face the surface you want, press "選択モデルに点字作成" (create braille on the selected model).
-- Live update while typing. Spaces can be typed in the text or set per word; readings can be edited.
+- One-button update (optional auto update, off by default). Spaces can be typed in the text or set per word; readings can be edited.
 - Line wrapping by braille rules, or a fixed number of cells per line.
 - Standard Japanese braille dimensions by default (2.4 mm dot pitch, 6.0 mm cell pitch), all adjustable. The default dot height is a gentle 0.3 mm. "Output size" scales the dots for the size you will print.
 - Verification: reads the generated dots back and checks them against the expected braille.
@@ -51,7 +51,7 @@ https://github.com/ssssrabbit/tenjipfab/issues
 **0.1.0 — Initial release / 初版**
 
 - Create Japanese braille on the surface of the selected mesh with one button ("選択モデルに点字作成").
-- Live update while typing: reading, word spacing, braille conversion and dot generation.
+- Update button: reading, word spacing, braille conversion and dot generation (optional auto update, off by default).
 - Braille rules based on the MEXT braille notation guidelines: kana, voiced/semi-voiced/contracted sounds, long vowels, numbers, Latin letters, punctuation, brackets, joining marks, wave dash, arrow, ellipsis, dash, percent, ampersand, number sign, asterisk, at sign, slash, hidden digits.
 - Spaces: type them in the text (N spaces = exactly N cells) or set them per word; option to turn automatic spacing off.
 - Line wrapping by braille rules or by a fixed number of cells per line.
@@ -72,9 +72,9 @@ https://github.com/ssssrabbit/tenjipfab/issues
 | Preview 4 | `preview-4-panel.png` | 1920 × 1080 |
 
 プレビューの説明文(キャプション)の案:
-1. Type text and the braille appears on the model, updating live.
+1. Type text, press "更新", and the braille appears on the model.
 2. The dots follow a gently curved surface.
 3. Several labels on one model: finish one with "新規点字" and start the next.
-4. Select a mesh, face the surface, press "選択モデルに点字作成", then type.
+4. Select a mesh, face the surface, press "選択モデルに点字作成", type, then press "更新".
 
 画像は `python3 tools/make_store_assets.py` で作り直せます(実際の Blender の画面写真 `docs/images/` と、macOS のフォントを使います)。

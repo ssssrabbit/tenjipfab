@@ -27,4 +27,12 @@ assert rep["dots_created"] == rep["dots_expected"] == 40, rep
 assert v["ok"], v
 for op in ("place_here", "new_label", "generate", "verify", "convert"):
     assert hasattr(bpy.ops.tenji, op), op
+# no threads, no depsgraph handler, auto update is opt-in
+import threading, sys
+assert not s.live and not any(getattr(h, "__module__", "").startswith("bl_ext") for h in bpy.app.handlers.depsgraph_update_post)
+assert "threading" not in vars(T), "threading must not be used"
+assert not any(t.name != "MainThread" and t.daemon for t in threading.enumerate() if "tenji" in t.name.lower())
+s.text = "点字"
+bpy.ops.tenji.generate()                      # the Update button converts and regenerates
+assert [w.orig for w in s.words] == ["点字"] and T.core.verify(sc, s.dots)["ok"]
 print("SMOKE OK:", s.report, v["decoded"])
